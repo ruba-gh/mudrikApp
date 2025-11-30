@@ -1,13 +1,14 @@
 //
-//  ContentView.swift
+//  TestView.swift
 //  mudrikApp
 //
 //  Created by Ruba Alghamdi on 09/06/1447 AH.
 //
 
+
 import SwiftUI
 
-struct ContentView: View {
+struct TestView: View {
     @State private var showPopup = false
     @State private var popupKind: PopupKind = .clipName
     @State private var inputText: String = ""
@@ -53,12 +54,37 @@ struct ContentView: View {
             // Disable all interactions when popup is visible
             .allowsHitTesting(!showPopup)
             
-            
+            // POPUP OVERLAY
+            if showPopup {
+                ZStack {
+                    // Dim background that also captures taps
+                    Color.black.opacity(0.45)
+                        .ignoresSafeArea()
+                        //tap outside to dismiss
+                        .onTapGesture {
+                            showPopup = false
+                        }
+                    
+                    TextFieldAlert(
+                        kind: popupKind,
+                        text: $inputText,
+                        onCancel: {
+                            showPopup = false
+                        },
+                        onConfirm: {
+                            print("User entered: \(inputText)")
+                            showPopup = false
+                        }
+                    )
+                }
+                .transition(.opacity)
+                .animation(.easeInOut, value: showPopup)
+            }
         }
     }
 }
 
 #Preview {
-    ContentView()
+    TestView()
 }
 
