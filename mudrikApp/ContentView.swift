@@ -11,48 +11,51 @@ struct ContentView: View {
     @State private var showPopup = false
     @State private var popupKind: PopupKind = .clipName
     @State private var inputText: String = ""
+    @Environment(\.colorScheme) private var colorScheme
+    
     
     var body: some View {
+        
         ZStack {
+            LinearGradient(
+                gradient: Gradient(stops: [
+                    .init( color: Color(uiColor: .systemBackground),   location: 0.0),
+                    .init( color: Color(uiColor: .systemBackground),   location: 0.7),
+                    .init(color: .orange, location: 1.0)    //
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                AppButton(title: "Adaptive White", type: .systemWhite) {
+            VStack(spacing: 10) {
+                Image(colorScheme == .light ? "LogoLight" : "LogoDark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 300, height: 300)
+                    .clipShape(Circle())
+                    .padding(.top,100)
+                
+                
+                Spacer()
+                
+                AppButton(
+                    title: "المترجم",
+                    iconName: "camera.viewfinder",
+                    type: .systemWhite
+                ) {
                     print("White tapped")
                 }
-                .padding()
                 
-                AppButton(title: "Adaptive Black", type: .systemBlack) {
+                AppButton(
+                    title: "المكتبة",
+                    iconName: "books.vertical.fill",
+                    type: .systemBlack
+                ) {
                     print("Black tapped")
                 }
-                .padding()
                 
-                AppButton(title: "Orange", type: .orange) {
-                    print("Orange tapped")
-                }
-                .padding()
-                
-                RoundOrangeButton(size: 70, icon: "plus") {
-                    print("Tapped small button")
-                }
-                
-                VStack(spacing: 20) {
-                    Button("تسمية المقطع") {
-                        popupKind = .clipName
-                        inputText = ""
-                        showPopup = true
-                    }
-                    
-                    Button("تسمية التصنيف") {
-                        popupKind = .categoryName
-                        inputText = ""
-                        showPopup = true
-                    }
-                }
-                .padding()
-            }
-            // Disable all interactions when popup is visible
-            .allowsHitTesting(!showPopup)
-            
+            }.padding()
             
         }
     }

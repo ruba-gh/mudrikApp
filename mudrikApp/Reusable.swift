@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct AppButton: View {
+    
     enum StyleType {
         case systemWhite
         case systemBlack
@@ -17,21 +18,41 @@ struct AppButton: View {
     }
     
     let title: String
+    let iconName: String?         
     let type: StyleType
     let action: () -> Void
+
+    init(
+        title: String,
+        iconName: String? = nil,
+        type: StyleType,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.iconName = iconName
+        self.type = type
+        self.action = action
+    }
     
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(textColor)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(backgroundColor)
-                .cornerRadius(100)
-                .glassEffect()
-                .glassEffect(.regular.interactive())
+            HStack(spacing: 8) {
+                if let iconName = iconName {
+                    Image(systemName: iconName)
+                        .imageScale(.medium)
+                }
+                
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+            }
+            .foregroundColor(textColor)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(backgroundColor)
+            .cornerRadius(100)
+            .glassEffect()
+            .glassEffect(.regular.interactive())
         }
     }
     
@@ -57,6 +78,7 @@ struct AppButton: View {
         }
     }
 }
+
 
 struct RoundOrangeButton: View {
     let size: CGFloat
