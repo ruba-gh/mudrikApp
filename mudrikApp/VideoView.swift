@@ -8,26 +8,26 @@
 import SwiftUI
 
 struct VideoView: View {
-    // POPUPS
+    // Popup state
     @State private var showCategoryPopup = false
     @State private var showTextFieldAlert = false
     @State private var popupKind: PopupKind = .clipName
     @State private var inputText: String = ""
 
-    // This will hold the name of the clip (not used yet)
+    // Stores the clip name (to be used later)
     @State private var clipName: String = ""
 
-    // Categories
+    // Category list
     @State private var categories: [String] = ["المكتبة", "قصص", "مقابلات"]
     
-    // Navigation
+    // Navigation state
     @State private var selectedCategory: String? = nil
     @State private var goToLibrary = false
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // Hidden NavigationLink
+                // Invisible NavigationLink used for programmatic navigation
                 NavigationLink(
                     destination: LibraryView(category: selectedCategory ?? ""),
                     isActive: $goToLibrary
@@ -47,6 +47,7 @@ struct VideoView: View {
                     Text("شاشة الفيديو")
                         .font(.title2)
 
+                    // Save clip button → opens clip name popup first
                     RoundOrangeButton(size: 70, icon: "square.and.arrow.down") {
                         popupKind = .clipName
                         inputText = ""
@@ -55,7 +56,7 @@ struct VideoView: View {
 
                 }
 
-                // 1) CATEGORY POPUP (only AFTER clip name is done)
+                // 1) Category selection popup (shown after clip name is confirmed)
                 if showCategoryPopup {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
@@ -75,7 +76,7 @@ struct VideoView: View {
                     )
                 }
 
-                // 2) TEXTFIELD POPUP (used for both clip name + new category)
+                // 2) Text-field popup (used for both clip name and new category name)
                 if showTextFieldAlert {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
@@ -96,19 +97,21 @@ struct VideoView: View {
     }
 
     // MARK: - Handle TextField Confirm
+    
     private func handleTextFieldConfirm() {
         let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         
         switch popupKind {
         case .clipName:
-            // Save the clip name (for later use)
+            // Store the clip name for later use
             clipName = trimmed
-            // Close name popup → open category popup
+            // Close the name popup → open the category popup
             showTextFieldAlert = false
             showCategoryPopup = true
 
         case .categoryName:
             if !trimmed.isEmpty {
+                // Add the new category and navigate directly to that category
                 categories.append(trimmed)
                 selectedCategory = trimmed
                 showCategoryPopup = false
@@ -117,12 +120,13 @@ struct VideoView: View {
             showTextFieldAlert = false
 
         default:
+            // Fallback: just close the text-field popup
             showTextFieldAlert = false
         }
     }
 }
 
-// MARK: - CATEGORY POPUP
+// MARK: - Category Popup
 
 struct CategoryPopup: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -145,6 +149,7 @@ struct CategoryPopup: View {
             Divider()
                 .overlay(Color.gray.opacity(0.4))
             
+            // Button to add a new category
             AppButton(
                 title: "إضافة تصنيف جديد",
                 iconName: "plus",
@@ -153,6 +158,7 @@ struct CategoryPopup: View {
                 onAddNewCategory()
             }
             
+            // List of existing categories
             ScrollView {
                 VStack(spacing: 8) {
                     ForEach(categories, id: \.self) { category in
@@ -178,10 +184,11 @@ struct CategoryPopup: View {
     }
 }
 
-// MARK: - PREVIEW
+// MARK: - Preview
 
 struct VideoView_Previews: PreviewProvider {
     static var previews: some View {
         VideoView()
     }
 }
+

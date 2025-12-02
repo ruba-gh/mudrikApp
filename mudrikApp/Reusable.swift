@@ -18,7 +18,7 @@ struct AppButton: View {
     }
     
     let title: String
-    let iconName: String?         
+    let iconName: String?
     let type: StyleType
     let action: () -> Void
 
