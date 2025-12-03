@@ -17,33 +17,42 @@ struct SplashView: View {
             Color(.systemBackground)
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
+            VStack(alignment: .center, spacing: 20) {
 
-                // Moving Logo
-                Image(colorScheme == .light ? "LogoLight" : "LogoDark")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 200)
-                    .offset(y: animate ? -10 : 0)
-                    .opacity(animate ? 1 : 0.5)
-                    .animation(.easeInOut(duration: 1.8).repeatForever(),
-                               value: animate)
-
-                // VIDEO same size as logo, placed UNDER it
-                LoopingVideoView(resourceName: "video", resourceExtension: "mov")
-                    .frame(width: 200, height: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+            
+                Spacer()
+                    
+                ZStack(alignment: .center) {
+                    // Video
+                    LoopingVideoView(resourceName: "video", resourceExtension: "mov")
+                       //.frame(width: 200, height: 300)
+                        .ignoresSafeArea()
+                        .padding(.bottom,0)
+                    
+                    Image(colorScheme == .light ? "LogoLight" : "LogoDark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 400)
+                        .offset(y: animate ? -10 : 0)
+                        .opacity(animate ? 1 : 0.5)
+                        .animation(
+                            .easeInOut(duration: 1.8).repeatForever(),
+                            value: animate)
+                        
+                    
+                    
+                }
+                
             }
         }
         .onAppear {
             animate = true
 
-            // Auto navigate after 6 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+            // Auto navigate after 3 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
                 navigate = true
             }
         }
-        // Transition to the main ContentView
         .fullScreenCover(isPresented: $navigate) {
             ContentView()
         }

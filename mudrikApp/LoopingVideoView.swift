@@ -1,68 +1,58 @@
+//
+//  LoopingVideoView.swift
+//  mudrikApp
+//
+
 import SwiftUI
-import AVKit
+import AVFoundation
 
-struct LoopingVideoView: View {
-    let player: AVPlayer?
+// UIKit view that actually plays & loops the video
+final class LoopingPlayerUIView: UIView {
+    private let playerLayer = AVPlayerLayer()
+    private let queuePlayer = AVQueuePlayer()
+    private var playerLooper: AVPlayerLooper?
 
-    init(resourceName: String, resourceExtension: String) {
-        if let url = Bundle.main.url(forResource: resourceName, withExtension: resourceExtension) {
-            self.player = AVPlayer(url: url)
-        } else {
-            self.player = nil
+    init(videoName: String, videoType: String) {
+        super.init(frame: .zero)
+
+        guard let url = Bundle.main.url(forResource: videoName, withExtension: videoType) else {
+            print("🔥 ERROR: Could not find video file \(videoName).\(videoType)")
+            return
         }
+
+        let item = AVPlayerItem(url: url)
+
+        // Layer setup
+        playerLayer.player = queuePlayer
+        playerLayer.videoGravity = .resizeAspectFill
+        layer.addSublayer(playerLayer)
+
+        // Looping
+        playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: item)
+        queuePlayer.isMuted = true
+        queuePlayer.play()
     }
 
-    var body: some View {
-        VideoPlayerView(player: player)
-            .onAppear {
-                guard let player else { return }
-                // Loop
-                NotificationCenter.default.addObserver(
-                    forName: .AVPlayerItemDidPlayToEndTime,
-                    object: player.currentItem,
-                    queue: .main
-                ) { _ in
-                    player.seek(to: .zero)
-                    player.play()
-                }
-                player.play()
-                player.isMuted = true
-            }
-            .onDisappear {
-                player?.pause()
-            }
-    }
-}
-
-// UIViewRepresentable to host AVPlayerLayer
-private struct VideoPlayerView: UIViewRepresentable {
-    let player: AVPlayer?
-
-    func makeUIView(context: Context) -> PlayerView {
-        let v = PlayerView()
-        v.player = player
-        v.videoGravity = .resizeAspectFill
-        return v
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        playerLayer.frame = bounds
     }
 
-    func updateUIView(_ uiView: PlayerView, context: Context) {
-        uiView.player = player
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
 
-// A UIView whose backing layer is AVPlayerLayer
-private final class PlayerView: UIView {
-    override static var layerClass: AnyClass { AVPlayerLayer.self }
+// SwiftUI wrapper
+struct LoopingVideoView: UIViewRepresentable {
+    let resourceName: String
+    let resourceExtension: String
 
-    var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
-
-    var player: AVPlayer? {
-        get { playerLayer.player }
-        set { playerLayer.player = newValue }
+    func makeUIView(context: Context) -> LoopingPlayerUIView {
+        LoopingPlayerUIView(videoName: resourceName, videoType: resourceExtension)
     }
 
-    var videoGravity: AVLayerVideoGravity {
-        get { playerLayer.videoGravity }
-        set { playerLayer.videoGravity = newValue }
+    func updateUIView(_ uiView: LoopingPlayerUIView, context: Context) {
+        // nothing to update for now
     }
 }

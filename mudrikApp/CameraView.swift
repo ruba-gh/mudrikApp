@@ -19,9 +19,12 @@ struct CameraView: View {
     @State private var selectedImage: UIImage? = nil
     @State private var showCropView = false
     
-    // For your buttons
+    // For your pickers
     @State private var showPhotoPicker = false
     @State private var showFilePicker = false
+    
+    // NEW: import popup
+    @State private var showImportPopup = false
     
     @State private var extractedText: String = ""
     
@@ -49,44 +52,40 @@ struct CameraView: View {
                     RoundedRectangle(cornerRadius: 24)
                         .stroke(Color.orange, lineWidth: 5)
                         .frame(width: size.width - 60, height: 350)
-                        .padding(.top, 150)
+                        .padding(.top, 30) // lifted a little
+                        .padding(.bottom, 140) // lifted a little
                     
                     VStack {
                         // ======= HEADER =======
                         VStack(spacing: 8) {
                             Text("التقط صورة للنص")
-                                .font(.title3.weight(.semibold))
-                                .foregroundColor(.white)
+                                .font(.largeTitle)
+                                .multilineTextAlignment(.trailing)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
                             
                             Text("وجّه الكاميرا نحو النص المراد ترجمته إلى لغة الإشارة")
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.8))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
+                                .multilineTextAlignment(.trailing)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.bottom, 30)
+                            
                         }
-                        .padding(.top, 40)
+                        .padding()
+                        
                         
                         Spacer()
                         
-                        // ===== YOUR BUTTONS =====
+                        // ===== IMPORT BUTTON =====
                         VStack(spacing: 12) {
                             AppButton(
-                                title: "من الصور",
-                                iconName: "photo.on.rectangle",
+                                title: "استيراد",
+                                iconName: "square.and.arrow.down",
                                 type: .systemWhite
                             ) {
-                                showPhotoPicker = true
-                            }
-                            
-                            AppButton(
-                                title: "من الملفات",
-                                iconName: "folder",
-                                type: .systemWhite
-                            ) {
-                                showFilePicker = true
+                                showImportPopup = true
                             }
                         }
                         .padding(.horizontal, 32)
+                        .padding(.bottom, 20)   // moves it up
                         
                         // ===== CAPTURE BUTTON =====
                         Button {
@@ -126,9 +125,46 @@ struct CameraView: View {
                                 Circle()
                                     .fill(Color.orange)
                                     .frame(width: 70, height: 70)
+                                    .glassEffect()
+                                    .glassEffect(.regular.interactive())
                             }
                         }
+                        
                         .padding(.bottom, 32)
+                    }
+                    
+                    // ===== IMPORT POPUP OVERLAY =====
+                    if showImportPopup {
+                        Color.black.opacity(0.45)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                        
+                        VStack {
+                            VStack(spacing: 16) {
+                                AppButton(
+                                    title: "ألبوم الصور",
+                                    iconName: "photo.on.rectangle",
+                                    type: .orange
+                                ) {
+                                    showImportPopup = false
+                                    showPhotoPicker = true
+                                }
+                                
+                                AppButton(
+                                    title: "الملفات",
+                                    iconName: "folder",
+                                    type: .systemWhite
+                                ) {
+                                    showImportPopup = false
+                                    showFilePicker = true
+                                }
+                            }
+                            .padding(20)
+                            .background(Color.black)
+                            .cornerRadius(24)
+                        }
+                        .padding(.horizontal, 24)
+                        .transition(.scale)
                     }
                     
                     // NAVIGATE TO CROPVIEW
@@ -164,6 +200,7 @@ struct CameraView: View {
     }
     
     // MARK: - Crop captured image to match the orange overlay
+    // MARK: - Crop captured image to match the orange overlay
     private func cropToOverlay(image: UIImage, in viewSize: CGSize) -> UIImage? {
         
         let imageSize = image.size
@@ -173,7 +210,7 @@ struct CameraView: View {
         // 1) Define the orange box frame in VIEW coordinates
         let boxWidth = viewSize.width - 60
         let boxHeight: CGFloat = 350
-        let boxTopPadding: CGFloat = 150
+        let boxTopPadding: CGFloat = 120   // keep in sync with padding above
         
         let originX = (viewSize.width - boxWidth) / 2
         let originY = (viewSize.height - boxHeight) / 2 + boxTopPadding
