@@ -34,41 +34,11 @@ struct LibraryView: View {
                 Color.white.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Header
-                    HStack(alignment: .top) {
-                        Button(action: {
-                            // TODO: Back action (dismiss or pop)
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.orange)
-                                .padding(10)
-                                .background(Color.white.opacity(0.8))
-                                .clipShape(Circle())
-                                .shadow(radius: 3)
-                        }
-                        .padding(.leading, 10)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            // "All clips" or forward action if you want
-                        }) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.orange)
-                                .padding(10)
-                                .background(Color.white.opacity(0.8))
-                                .clipShape(Circle())
-                                .shadow(radius: 3)
-                        }
-                        .padding(.trailing, 10)
-                    }
-                    .padding(.top, 10)
-                    
                     // Categories row
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
+                            // If you want to support adding categories here later, wire this up
+                            // For now, we keep the button but no-op or you can remove it.
                             Button(action: {
                                 // TODO: Add new category
                             }) {
@@ -77,6 +47,8 @@ struct LibraryView: View {
                                     .foregroundColor(.black)
                                     .padding(10)
                                     .background(Color.gray.opacity(0.2))
+                                    .glassEffect()
+                                    .glassEffect(.regular.interactive())
                                     .clipShape(Circle())
                             }
                             
@@ -95,11 +67,16 @@ struct LibraryView: View {
                                             ? Color.orange
                                             : Color.gray.opacity(0.2)
                                         )
+                                        
                                         .cornerRadius(20)
+                                        .glassEffect()
+                                        .glassEffect(.regular.interactive())
                                 }
+                                
                             }
                         }
                         .padding(.horizontal, 20)
+                        .padding(.top, 10)
                     }
                     
                     // Grid
@@ -128,8 +105,10 @@ struct LibraryView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 10)
                 }
-                .navigationBarHidden(true)
             }
+            // Use the standard navigation bar with a title; the system back button will show automatically when pushed.
+            .navigationTitle("المكتبة")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
