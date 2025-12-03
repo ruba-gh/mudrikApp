@@ -11,7 +11,7 @@ import SwiftUI
 struct mudrikAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SplashView()
         }
     }
 }

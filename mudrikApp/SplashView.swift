@@ -14,24 +14,32 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            // Background
             Color(.systemBackground)
                 .ignoresSafeArea()
 
-            // Moving Logo
-            Image(colorScheme == .light ? "LogoLight" : "LogoDark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 200)
-                .offset(y: animate ? -10 : 0)
-                .opacity(animate ? 1 : 0.5)
-                .animation(.easeInOut(duration: 1.8).repeatForever(), value: animate)
+            VStack(spacing: 20) {
+
+                // Moving Logo
+                Image(colorScheme == .light ? "LogoLight" : "LogoDark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200)
+                    .offset(y: animate ? -10 : 0)
+                    .opacity(animate ? 1 : 0.5)
+                    .animation(.easeInOut(duration: 1.8).repeatForever(),
+                               value: animate)
+
+                // VIDEO same size as logo, placed UNDER it
+                LoopingVideoView(resourceName: "video", resourceExtension: "mov")
+                    .frame(width: 200, height: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+            }
         }
         .onAppear {
             animate = true
 
-            // Auto navigate after 4 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            // Auto navigate after 6 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
                 navigate = true
             }
         }
@@ -41,6 +49,7 @@ struct SplashView: View {
         }
     }
 }
+
 #Preview {
     SplashView()
 }

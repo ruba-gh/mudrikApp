@@ -6,11 +6,13 @@ struct ContentView: View {
     @State private var inputText: String = ""
     @Environment(\.colorScheme) private var colorScheme
     
+    // ✅ State to trigger navigation
+    @State private var goToCamera = false
+    
     var body: some View {
-        // NavigationStack wraps the entire screen
         NavigationStack {
             ZStack {
-                // Background gradient for the whole page
+                // Background gradient
                 LinearGradient(
                     gradient: Gradient(stops: [
                         .init(color: Color(uiColor: .systemBackground), location: 0.0),
@@ -22,9 +24,18 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
                 
+                // 🔍 Hidden NavigationLink that listens to `goToCamera`
+                NavigationLink(
+                    destination: CameraView(),
+                    isActive: $goToCamera
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+                
                 VStack(spacing: 10) {
                     
-                    // App Logo (changes based on system appearance)
+                    // Logo (light/dark)
                     Image(colorScheme == .light ? "LogoLight" : "LogoDark")
                         .resizable()
                         .scaledToFit()
@@ -32,33 +43,18 @@ struct ContentView: View {
                         .clipShape(Circle())
                         .padding(.top, 100)
                     
-                    
-                    // ⚠️ Temporary navigation button — for testing only
-                    NavigationLink {
-                        CameraView()
-                    } label: {
-                        Text("Go to CameraView")
-                            .font(.headline)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .padding(.horizontal)
-                    // ⚠️ End of temporary navigation
-                    
-                    
                     Spacer()
                     
-                    // Translator button
+                    // 📸 مترجم — now actually navigates
                     AppButton(
                         title: "المترجم",
                         iconName: "camera.viewfinder",
                         type: .systemWhite
                     ) {
-                        print("Translator tapped")
+                        goToCamera = true   // ✅ triggers navigation
                     }
                     
-                    // Library button
+                    // 📚 Library button (still just prints for now)
                     AppButton(
                         title: "المكتبة",
                         iconName: "books.vertical.fill",
