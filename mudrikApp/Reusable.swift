@@ -187,3 +187,59 @@ struct TextFieldAlert: View {
         .padding(.horizontal, 32)
     }
 }
+
+// MARK: - CATEGORY POPUP
+
+struct CategoryPopup: View {
+    @Environment(\.colorScheme) private var colorScheme
+    
+    let categories: [String]
+    let onAddNewCategory: () -> Void
+    let onCategoryTap: (String) -> Void
+    
+    var body: some View {
+        let bgColor   = colorScheme == .light ? Color.black : Color.white
+        let textColor = colorScheme == .light ? Color.white : Color.black
+        
+        VStack(spacing: 14) {
+            Text("اختر التصنيف")
+                .font(.headline)
+                .foregroundColor(textColor)
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+            
+            Divider()
+                .overlay(Color.gray.opacity(0.4))
+            
+            AppButton(
+                title: "إضافة تصنيف جديد",
+                iconName: "plus",
+                type: .orange
+            ) {
+                onAddNewCategory()
+            }
+            
+            ScrollView {
+                VStack(spacing: 8) {
+                    ForEach(categories, id: \.self) { category in
+                        AppButton(
+                            title: category,
+                            iconName: nil,
+                            type: .systemWhite
+                        ) {
+                            onCategoryTap(category)
+                        }
+                    }
+                }
+            }
+            .frame(maxHeight: 150)
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .background(bgColor)
+        .cornerRadius(18)
+        .shadow(radius: 8)
+        .frame(maxWidth: 320)
+        .padding(.horizontal, 32)
+    }
+}

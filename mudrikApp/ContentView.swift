@@ -8,6 +8,11 @@ struct ContentView: View {
     
     // ✅ State to trigger navigation
     @State private var goToCamera = false
+    @State private var goToLibrary = false
+    
+    // ✅ State required by LibraryView
+    @State private var allSavedClips: [SavedClip] = []
+    @State private var categories: [String] = ["المكتبة", "قصص", "مقابلات"]
     
     var body: some View {
         NavigationStack {
@@ -28,6 +33,12 @@ struct ContentView: View {
                 NavigationLink(
                     destination: CameraView(),
                     isActive: $goToCamera
+                ) {
+                    EmptyView()
+                }
+                NavigationLink(
+                    destination: LibraryView(allClips: $allSavedClips, categories: $categories),
+                    isActive: $goToLibrary
                 ) {
                     EmptyView()
                 }
@@ -54,13 +65,13 @@ struct ContentView: View {
                         goToCamera = true   // ✅ triggers navigation
                     }
                     
-                    // 📚 Library button (still just prints for now)
+                    // 📚 Library button
                     AppButton(
                         title: "المكتبة",
                         iconName: "books.vertical.fill",
                         type: .systemBlack
                     ) {
-                        print("Library tapped")
+                        goToLibrary = true
                     }
                 }
                 .padding()

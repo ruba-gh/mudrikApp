@@ -26,6 +26,7 @@ struct CameraView: View {
     // NEW: import popup
     @State private var showImportPopup = false
     
+    // Text extracted from CropView
     @State private var extractedText: String = ""
     
     // State used by handleCameraTap (permission flow / legacy camera picker)
@@ -35,6 +36,12 @@ struct CameraView: View {
     
     // Geometry of the whole view
     @State private var viewSize: CGSize = .zero
+
+    // Data required by VideoPlayerView and LibraryView
+    @State private var allSavedClips: [SavedClip] = []
+    @State private var categories: [String] = ["المكتبة", "قصص", "مقابلات"]
+    @State private var navigateToVideoPlayer = false
+    @State private var navigateToLibrary = false
     
     var body: some View {
         NavigationStack {
@@ -171,13 +178,39 @@ struct CameraView: View {
                     NavigationLink("", isActive: $showCropView) {
                         if let selectedImage {
                             CropView(image: selectedImage) { text in
+                                // Called when user taps the check button in CropView
                                 extractedText = text
                                 print("📝 Extracted text: \(text)")
+                                // Trigger navigation to VideoPlayerView
+                                navigateToVideoPlayer = true
                             }
                         } else {
                             Color.black
                         }
                     }
+
+                    // Hidden NavigationLink to VideoPlayerView
+                    NavigationLink(
+                        destination: VideoPlayerView(
+                            extractedText: extractedText,
+                            allSavedClips: $allSavedClips,
+                            categories: $categories,
+                            navigateToLibrary: $navigateToLibrary
+                        ),
+                        isActive: $navigateToVideoPlayer
+                    ) {
+                        EmptyView()
+                    }
+                    .hidden()
+
+                    // Hidden NavigationLink to LibraryView (final destination)
+                    NavigationLink(
+                        destination: LibraryView(allClips: $allSavedClips, categories: $categories),
+                        isActive: $navigateToLibrary
+                    ) {
+                        EmptyView()
+                    }
+                    .hidden()
                 }
                 .onAppear {
                     viewSize = size
@@ -199,7 +232,6 @@ struct CameraView: View {
         }
     }
     
-    // MARK: - Crop captured image to match the orange overlay
     // MARK: - Crop captured image to match the orange overlay
     private func cropToOverlay(image: UIImage, in viewSize: CGSize) -> UIImage? {
         

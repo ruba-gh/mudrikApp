@@ -29,15 +29,15 @@ struct SplashView: View {
                         .ignoresSafeArea()
                         .padding(.bottom,0)
                     
-                    Image(colorScheme == .light ? "LogoLight" : "LogoDark")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 400)
-                        .offset(y: animate ? -10 : 0)
-                        .opacity(animate ? 1 : 0.5)
-                        .animation(
-                            .easeInOut(duration: 1.8).repeatForever(),
-                            value: animate)
+//                    Image(colorScheme == .light ? "LogoLight" : "LogoDark")
+//                        .resizable()
+//                        .scaledToFit()
+//                        .frame(width: 400)
+//                        .offset(y: animate ? -10 : 0)
+//                        .opacity(animate ? 1 : 0.5)
+//                        .animation(
+//                            .easeInOut(duration: 1.8).repeatForever(),
+//                            value: animate)
                         
                     
                     
@@ -49,7 +49,7 @@ struct SplashView: View {
             animate = true
 
             // Auto navigate after 3 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.3) {
                 navigate = true
             }
         }
