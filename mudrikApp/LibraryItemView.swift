@@ -7,16 +7,24 @@
 
 import SwiftUI
 
-// MARK: - 2. Library Item View (مربع الفيديو البرتقالي)
+// MARK: - Library Item View (MVVM)
 struct LibraryItemView: View {
-    let clip: SavedClip
+    @StateObject private var viewModel: LibraryItemViewModel
+
+    // These remain as bindings because navigation destination needs them
     @Binding var allSavedClips: [SavedClip]
     @Binding var categories: [String]
-    
+
+    init(clip: SavedClip, allSavedClips: Binding<[SavedClip]>, categories: Binding<[String]>) {
+        _viewModel = StateObject(wrappedValue: LibraryItemViewModel(clip: clip))
+        self._allSavedClips = allSavedClips
+        self._categories = categories
+    }
+
     var body: some View {
         NavigationLink(
             destination: VideoPlayerView(
-                clipNameFromLibrary: clip.name,
+                clipNameFromLibrary: viewModel.title,
                 allSavedClips: $allSavedClips,
                 categories: $categories,
                 navigateToLibrary: .constant(false)
@@ -24,23 +32,23 @@ struct LibraryItemView: View {
         ) {
             VStack(spacing: 8) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.orange)
-                        .frame(width: 80, height: 80)
-                    
-                    Image(systemName: "play.fill")
+                    RoundedRectangle(cornerRadius: viewModel.cornerRadius)
+                        .fill(viewModel.backgroundColor)
+                        .frame(width: viewModel.tileSize.width, height: viewModel.tileSize.height)
+
+                    Image(systemName: viewModel.iconName)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .foregroundColor(.white)
+                        .frame(width: viewModel.iconSize.width, height: viewModel.iconSize.height)
+                        .foregroundColor(viewModel.iconColor)
                 }
-                
-                Text(clip.name)
+
+                Text(viewModel.title)
                     .font(.caption)
-                    .foregroundColor(.black)
+                    .foregroundColor(viewModel.titleColor)
                     .multilineTextAlignment(.center)
             }
-            .frame(width: 80)
+            .frame(width: viewModel.tileSize.width)
         }
     }
 }

@@ -8,42 +8,10 @@
 import SwiftUI
 import AVKit
 
-// MARK: - VideoPlayerView (صفحة الفيديو الرئيسية)
+// MARK: - VideoPlayerView (صفحة الفيديو الرئيسية, MVVM)
 struct VideoPlayerView: View {
-    let extractedText: String?
-    let clipNameFromLibrary: String?
-    
-    @Binding var allSavedClips: [SavedClip]
-    @Binding var categories: [String]
-    @Binding var navigateToLibrary: Bool
-    
-    @State private var showSavePopup = false
-    @State private var showCategoryPopup = false
-    @State private var popupKind: PopupKind = .clipName
-    @State private var inputText: String = ""
-    @State private var clipName: String = ""
-    
-    @State private var selectedCategory: String? = nil
-    // @Environment(\.dismiss) private var dismiss   // no longer needed
-    
-    var pageTitle: String {
-        if let name = clipNameFromLibrary {
-            return name
-        } else if let text = extractedText, !text.isEmpty {
-            return "ترجمة النص"
-        } else {
-            return "صفحة الفيديو"
-        }
-    }
-    
-    var categoriesForPopup: [String] {
-        var list = categories
-        if !list.contains("المكتبة") {
-            list.insert("المكتبة", at: 0)
-        }
-        return list
-    }
-    
+    @StateObject private var viewModel: VideoPlayerViewModel
+
     init(
         extractedText: String? = nil,
         clipNameFromLibrary: String? = nil,
@@ -51,37 +19,39 @@ struct VideoPlayerView: View {
         categories: Binding<[String]>,
         navigateToLibrary: Binding<Bool>
     ) {
-        self.extractedText = extractedText
-        self.clipNameFromLibrary = clipNameFromLibrary
-        self._allSavedClips = allSavedClips
-        self._categories = categories
-        self._navigateToLibrary = navigateToLibrary
+        _viewModel = StateObject(wrappedValue: VideoPlayerViewModel(
+            extractedText: extractedText,
+            clipNameFromLibrary: clipNameFromLibrary,
+            allSavedClips: allSavedClips,
+            categories: categories,
+            navigateToLibrary: navigateToLibrary
+        ))
     }
-    
+
     var body: some View {
         ZStack {
-            // 🔹 Hidden NavigationLink that pushes LibraryView when navigateToLibrary == true
+            // Hidden NavigationLink to LibraryView
             NavigationLink(
-                destination: LibraryView(allClips: $allSavedClips, categories: $categories),
-                isActive: $navigateToLibrary
+                destination: LibraryView(allClips: $viewModel.allSavedClips, categories: $viewModel.categories),
+                isActive: $viewModel.navigateToLibrary
             ) {
                 EmptyView()
             }
             .hidden()
-            
+
             Color.white.ignoresSafeArea()
-            
+
             VStack(spacing: 20) {
                 HStack {
                     Spacer()
-                    Text(pageTitle)
+                    Text(viewModel.pageTitle)
                         .font(.title)
                         .fontWeight(.bold)
                         .foregroundColor(.black)
                     Spacer()
                 }
                 .padding(.top, 20)
-                
+
                 VStack {
                     if let videoURL = Bundle.main.url(forResource: "avatarr", withExtension: "mp4") {
                         VideoPlayer(player: AVPlayer(url: videoURL))
@@ -101,14 +71,12 @@ struct VideoPlayerView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                
+
                 Spacer()
-                
-                if clipNameFromLibrary == nil {
+
+                if viewModel.clipNameFromLibrary == nil {
                     Button(action: {
-                        popupKind = .clipName
-                        inputText = ""
-                        showSavePopup = true
+                        viewModel.onTapSaveButton()
                     }) {
                         Image(systemName: "square.and.arrow.down")
                             .resizable()
@@ -124,79 +92,40 @@ struct VideoPlayerView: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
-            
+
             // CATEGORY POPUP
-            if showCategoryPopup {
+            if viewModel.showCategoryPopup {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
-                
+
                 CategoryPopup(
-                    categories: categoriesForPopup,
+                    categories: viewModel.categoriesForPopup,
                     onAddNewCategory: {
-                        popupKind = .categoryName
-                        inputText = ""
-                        showCategoryPopup = false
-                        showSavePopup = true
+                        viewModel.addNewCategoryFlow()
                     },
                     onCategoryTap: { category in
-                        selectedCategory = category
-                        showCategoryPopup = false
-                        saveClipAndNavigate(category: category)
+                        viewModel.selectCategoryAndSave(category)
                     }
                 )
             }
-            
+
             // TEXTFIELD POPUP
-            if showSavePopup {
+            if viewModel.showSavePopup {
                 Color.black.opacity(0.5)
                     .ignoresSafeArea()
-                
+
                 TextFieldAlert(
-                    kind: popupKind,
-                    text: $inputText,
+                    kind: viewModel.popupKind,
+                    text: $viewModel.inputText,
                     onCancel: {
-                        showSavePopup = false
+                        viewModel.showSavePopup = false
                     },
                     onConfirm: {
-                        handleTextFieldConfirm()
+                        viewModel.handleTextFieldConfirm()
                     }
                 )
             }
         }
-    }
-    
-    // MARK: - Logic
-    
-    private func handleTextFieldConfirm() {
-        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        
-        switch popupKind {
-        case .clipName:
-            clipName = trimmed
-            showSavePopup = false
-            showCategoryPopup = true
-            
-        case .categoryName:
-            if !categories.contains(trimmed) {
-                categories.append(trimmed)
-            }
-            showSavePopup = false
-            saveClipAndNavigate(category: trimmed)
-        }
-    }
-    
-    private func saveClipAndNavigate(category: String) {
-        if !categories.contains(category) {
-            categories.append(category)
-        }
-        
-        let finalClipName = clipName.isEmpty ? "مقطع بدون اسم" : clipName
-        let newClip = SavedClip(name: finalClipName, category: category)
-        allSavedClips.append(newClip)
-        
-        // ✅ This now triggers the NavigationLink above to push LibraryView
-        navigateToLibrary = true
     }
 }
 
@@ -208,7 +137,7 @@ struct VideoPlayerView_Previews: PreviewProvider {
         ]
         @State private var cats: [String] = ["قصص", "مطبخ"]
         @State private var navigate = false
-        
+
         var body: some View {
             VideoPlayerView(
                 extractedText: "هذا نص مستخرج من الصورة",
