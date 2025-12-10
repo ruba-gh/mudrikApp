@@ -396,7 +396,7 @@
 				CODE_SIGN_ENTITLEMENTS = mudrikApp/mudrikApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WCFHST4JKH;
+				DEVELOPMENT_TEAM = AM6BY2Y4YH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "يحتاج التطبيق لاستخدام الكاميرا لالتقاط النص وتحويله";
@@ -430,7 +430,7 @@
 				CODE_SIGN_ENTITLEMENTS = mudrikApp/mudrikApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WCFHST4JKH;
+				DEVELOPMENT_TEAM = AM6BY2Y4YH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "يحتاج التطبيق لاستخدام الكاميرا لالتقاط النص وتحويله";

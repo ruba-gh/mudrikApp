@@ -15,6 +15,18 @@ final class LibraryViewModel: ObservableObject {
         self._categories = categories
         let initialCategory = allClips.wrappedValue.last?.category ?? ""
         self.selectedCategory = initialCategory
+        self._allClips = allClips
+        self._categories = categories
+
+        let storage = StorageManager()
+        allClips.wrappedValue = storage.loadClips()
+        categories.wrappedValue = storage.loadCategories().isEmpty ? categories.wrappedValue : storage.loadCategories()
+
+        self.selectedCategory = allClips.wrappedValue.last?.category ?? ""
+
+        
+        
+        
     }
 
     var filteredClips: [SavedClip] {

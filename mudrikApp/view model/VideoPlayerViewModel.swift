@@ -92,15 +92,40 @@ final class VideoPlayerViewModel: ObservableObject {
         saveClipAndNavigate(category: category)
     }
 
+//    private func saveClipAndNavigate(category: String) {
+//        if !categories.contains(category) {
+//            categories.append(category)
+//        }
+//
+//        let finalClipName = clipName.isEmpty ? "مقطع بدون اسم" : clipName
+//        let newClip = SavedClip(name: finalClipName, category: category)
+//        allSavedClips.append(newClip)
+//
+//        navigateToLibrary = true
+//    }
+    
     private func saveClipAndNavigate(category: String) {
+
         if !categories.contains(category) {
             categories.append(category)
         }
 
         let finalClipName = clipName.isEmpty ? "مقطع بدون اسم" : clipName
-        let newClip = SavedClip(name: finalClipName, category: category)
+
+        let newClip = SavedClip(
+            name: finalClipName,
+            category: category,
+            videoFileName: "avatarr.mp4"
+        )
+
         allSavedClips.append(newClip)
+
+        StorageManager().saveClips(allSavedClips)
+        StorageManager().saveCategories(categories)
 
         navigateToLibrary = true
     }
+
+    
+    
 }
