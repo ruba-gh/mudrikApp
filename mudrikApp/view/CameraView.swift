@@ -19,30 +19,27 @@ struct CameraView: View {
     @State private var selectedImage: UIImage? = nil
     @State private var showCropView = false
 
-    // For your pickers
+    // Pickers
     @State private var showPhotoPicker = false
     @State private var showFilePicker = false
 
-    // NEW: import popup
+    // Import popup
     @State private var showImportPopup = false
 
-    // Text extracted from CropView
+    // Text extracted
     @State private var extractedText: String = ""
 
-    // State used by handleCameraTap (permission flow / legacy camera picker)
-    @State private var showCamera = false
-    @State private var cameraPermissionDenied = false
-    @State private var showCameraPermissionAlert = false
-
-    // Geometry of the whole view
+    // Geometry
     @State private var viewSize: CGSize = .zero
 
-    // Use the shared store instead of local arrays
+    // Shared store
     @EnvironmentObject var store: ClipsStore
 
     // Navigation flags
     @State private var navigateToVideoPlayer = false
     @State private var navigateToLibrary = false
+
+    // Guide offset
     private let guideYOffset: CGFloat = -100
 
     var body: some View {
@@ -51,13 +48,12 @@ struct CameraView: View {
                 let size = geo.size
 
                 ZStack {
-
-                    // *** LIVE CAMERA FEED ***
+                    // LIVE CAMERA FEED
                     CameraPreview(session: camera.session)
                         .ignoresSafeArea()
                         .onAppear { camera.startSession() }
 
-                    // ======= ORANGE BORDER BOX (GUIDE) =======
+                    // ORANGE GUIDE (same rect used for cropping)
                     let guide = boxRect(in: size).offsetBy(dx: 0, dy: guideYOffset)
 
                     RoundedRectangle(cornerRadius: 24)
@@ -66,7 +62,7 @@ struct CameraView: View {
                         .position(x: guide.midX, y: guide.midY)
 
                     VStack {
-                        // ======= HEADER =======
+                        // HEADER
                         VStack(spacing: 8) {
                             Text("التقط صورة للنص")
                                 .font(.largeTitle)
@@ -77,13 +73,12 @@ struct CameraView: View {
                                 .multilineTextAlignment(.trailing)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .padding(.bottom, 30)
-
                         }
                         .padding()
 
                         Spacer()
 
-                        // ===== IMPORT BUTTON =====
+                        // IMPORT BUTTON
                         VStack(spacing: 12) {
                             AppButton(
                                 title: "استيراد",
@@ -96,37 +91,39 @@ struct CameraView: View {
                         .padding(.horizontal, 32)
                         .padding(.bottom, 20)
 
-                        // ===== CAPTURE BUTTON =====
+                        // CAPTURE BUTTON
                         Button {
                             print("▶️ Capture button tapped")
+
                             camera.capturePhotoForOCR { image in
-                                guard let image = image else {
+                                guard let image else {
                                     print("⚠️ No image captured")
                                     return
                                 }
 
-                                print("📸 Image captured size: \(image.size)")
+                                DispatchQueue.main.async {
+                                    print("📸 Image captured size: \(image.size)")
 
-                                // Make sure we have a valid viewSize
-                                guard viewSize.width > 0, viewSize.height > 0 else {
-                                    print("⚠️ viewSize is zero, using full image")
-                                    selectedImage = image
+                                    // If viewSize is not ready, fallback to full image
+                                    guard viewSize.width > 0, viewSize.height > 0 else {
+                                        print("⚠️ viewSize is zero, using full image")
+                                        selectedImage = image
+                                        showCropView = true
+                                        return
+                                    }
+
+                                    let rectOnScreen = boxRect(in: viewSize).offsetBy(dx: 0, dy: guideYOffset)
+
+                                    if let cropped = crop(image: image, viewSize: viewSize, rectOnScreen: rectOnScreen) {
+                                        print("✅ Cropped image size: \(cropped.size)")
+                                        selectedImage = cropped
+                                    } else {
+                                        print("⚠️ Cropping failed, using full image")
+                                        selectedImage = image
+                                    }
+
                                     showCropView = true
-                                    return
                                 }
-
-                                // Use the exact same rect used to draw the orange guide
-                                let rectOnScreen = boxRect(in: viewSize).offsetBy(dx: 0, dy: guideYOffset)
-
-                                if let cropped = crop(image: image, viewSize: viewSize, rectOnScreen: rectOnScreen) {
-                                    print("✅ Cropped image size: \(cropped.size)")
-                                    selectedImage = cropped
-                                } else {
-                                    print("⚠️ Cropping failed, using full image")
-                                    selectedImage = image
-                                }
-
-                                showCropView = true
                             }
                         } label: {
                             ZStack {
@@ -141,11 +138,10 @@ struct CameraView: View {
                                     .glassEffect(.regular.interactive())
                             }
                         }
-
                         .padding(.bottom, 32)
                     }
 
-                    // ===== IMPORT POPUP OVERLAY =====
+                    // IMPORT POPUP OVERLAY
                     if showImportPopup {
                         Color.black.opacity(0.45)
                             .ignoresSafeArea()
@@ -179,14 +175,11 @@ struct CameraView: View {
                         .transition(.scale)
                     }
 
-                    // NAVIGATE TO CROPVIEW
+                    // NAVIGATE TO CROP (WITH ALERT ON THE DESTINATION SCREEN)
                     NavigationLink("", isActive: $showCropView) {
                         if let selectedImage {
-                            CropView(image: selectedImage) { text in
-                                // Called when user taps the check button in CropView
-                                extractedText = text
-                                print("📝 Extracted text: \(text)")
-                                // Trigger navigation to VideoPlayerView
+                            CropScreen(image: selectedImage) { validArabicText in
+                                extractedText = validArabicText
                                 navigateToVideoPlayer = true
                             }
                         } else {
@@ -208,7 +201,7 @@ struct CameraView: View {
                     }
                     .hidden()
 
-                    // Hidden NavigationLink to LibraryView (final destination)
+                    // Hidden NavigationLink to LibraryView
                     NavigationLink(
                         destination: LibraryView(allClips: $store.clips, categories: $store.categories),
                         isActive: $navigateToLibrary
@@ -217,12 +210,8 @@ struct CameraView: View {
                     }
                     .hidden()
                 }
-                .onAppear {
-                    viewSize = size
-                }
-                .onChange(of: size) { newSize in
-                    viewSize = newSize
-                }
+                .onAppear { viewSize = size }
+                .onChange(of: size) { viewSize = $0 }
             }
             .sheet(isPresented: $showPhotoPicker) {
                 PhotoPicker(image: $selectedImage)
@@ -237,30 +226,27 @@ struct CameraView: View {
         }
     }
 
-    // MARK: - Single source of truth for the orange guide rect on screen
+    // MARK: - Guide rect (single source of truth)
     private func boxRect(in viewSize: CGSize) -> CGRect {
-        // Keep the same visual as before: width = view width - 60, height = 350
-        // Previously you used padding; here we compute explicit position.
         let width = max(0, viewSize.width - 60)
         let height: CGFloat = 350
 
-        // Center vertically, then nudge down to roughly match your prior padding combo
-        // You can tweak offsetY to fine-tune if needed.
         let centerY = viewSize.height / 2
-        let offsetY: CGFloat = 50 // tuned to visually match previous layout
+        let offsetY: CGFloat = 50
+
         let originX = (viewSize.width - width) / 2
         let originY = centerY - (height / 2) + offsetY
 
         return CGRect(x: originX, y: originY, width: width, height: height)
     }
 
-    // MARK: - Crop using the guide rect and the preview's aspect fill
+    // MARK: - Crop to what is inside the guide box
     private func crop(image: UIImage, viewSize: CGSize, rectOnScreen: CGRect) -> UIImage? {
         let imageSize = image.size
         guard imageSize.width > 0, imageSize.height > 0 else { return nil }
         guard viewSize.width > 0, viewSize.height > 0 else { return nil }
 
-        // AVCaptureVideoPreviewLayer uses .resizeAspectFill
+        // preview uses .resizeAspectFill
         let scale = max(viewSize.width / imageSize.width,
                         viewSize.height / imageSize.height)
         guard scale.isFinite, scale > 0 else { return nil }
@@ -270,7 +256,7 @@ struct CameraView: View {
         let offsetX = (viewSize.width - imageDisplaySize.width) / 2
         let offsetY = (viewSize.height - imageDisplaySize.height) / 2
 
-        // Convert from view coords → image coords
+        // View coords -> Image coords
         let cropOriginX = (rectOnScreen.origin.x - offsetX) / scale
         let cropOriginY = (rectOnScreen.origin.y - offsetY) / scale
         let cropWidth = rectOnScreen.size.width / scale
@@ -278,44 +264,52 @@ struct CameraView: View {
 
         var cropRect = CGRect(x: cropOriginX, y: cropOriginY, width: cropWidth, height: cropHeight)
 
-        // Clamp and validate
+        // Clamp
         let imageRect = CGRect(origin: .zero, size: imageSize)
-        if !imageRect.intersects(cropRect) {
-            return nil
-        }
+        guard imageRect.intersects(cropRect) else { return nil }
         cropRect = cropRect.intersection(imageRect)
         guard cropRect.width > 0, cropRect.height > 0 else { return nil }
 
         guard let cgImage = image.cgImage?.cropping(to: cropRect) else { return nil }
-
         return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
     }
+}
 
-    // MARK: - Camera Permission + Open Camera (kept for future use)
-    private func handleCameraTap() {
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
+// MARK: - Crop destination screen (owns the alert because THIS screen is visible)
+private struct CropScreen: View {
+    let image: UIImage
+    let onValidArabicText: (String) -> Void
 
-        switch status {
-        case .authorized:
-            showCamera = true
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                DispatchQueue.main.async {
-                    if granted {
-                        self.showCamera = true
-                    } else {
-                        self.cameraPermissionDenied = true
-                        self.showCameraPermissionAlert = true
-                    }
+    @State private var showArabicOnlyAlert = false
+
+    var body: some View {
+        CropView(image: image) { text in
+            let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            DispatchQueue.main.async {
+                guard !cleaned.isEmpty else { return }
+
+                guard cleaned.containsArabic else {
+                    showArabicOnlyAlert = true
+                    return
                 }
+
+                onValidArabicText(cleaned)
             }
-        case .denied, .restricted:
-            cameraPermissionDenied = true
-            showCameraPermissionAlert = true
-        @unknown default:
-            cameraPermissionDenied = true
-            showCameraPermissionAlert = true
         }
+        .alert("تنبيه", isPresented: $showArabicOnlyAlert) {
+            Button("حسناً", role: .cancel) {}
+        } message: {
+            Text("يمكن ترجمة النصوص المكتوبة باللغة العربية فقط.")
+        }
+    }
+}
+
+// MARK: - Arabic detection
+extension String {
+    var containsArabic: Bool {
+        let pattern = "[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF]"
+        return range(of: pattern, options: .regularExpression) != nil
     }
 }
 
