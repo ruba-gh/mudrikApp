@@ -212,15 +212,15 @@ struct VideoPlayerView: View {
                 } else {
                     HStack(spacing: 12) {
 
-                        Button {
-                            viewModel.navigateToLibrary = true
-                        } label: {
-                            Image(systemName: "chevron.backward")
-                                .foregroundColor(.black)
-                                .padding(12)
-                                .background(Color.gray.opacity(0.2))
-                                .clipShape(Circle())
-                        }
+//                        Button {
+//                            viewModel.navigateToLibrary = true
+//                        } label: {
+//                            Image(systemName: "chevron.backward")
+//                                .foregroundColor(.white)
+//                                .padding(12)
+//                                .background(Color.gray.opacity(0.2))
+//                                .clipShape(Circle())
+//                        }
 
                         Spacer()
 

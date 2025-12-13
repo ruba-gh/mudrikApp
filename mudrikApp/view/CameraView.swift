@@ -214,6 +214,16 @@ struct CameraView: View {
                 }
                 .onAppear {
                     viewSize = size
+                    // Load persisted arrays once when the camera screen appears
+                    let storage = StorageManager()
+                    let loadedClips = storage.loadClips()
+                    if !loadedClips.isEmpty {
+                        allSavedClips = loadedClips
+                    }
+                    let loadedCategories = storage.loadCategories()
+                    if !loadedCategories.isEmpty {
+                        categories = loadedCategories
+                    }
                 }
                 .onChange(of: size) { newSize in
                     viewSize = newSize
