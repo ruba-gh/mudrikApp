@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct mudrikAppApp: App {
+    // Shared store for the whole app lifecycle
+    @StateObject private var store = ClipsStore()
+
     var body: some Scene {
         WindowGroup {
             SplashView()
+                .environmentObject(store)
         }
     }
 }

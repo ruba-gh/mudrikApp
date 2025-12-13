@@ -9,14 +9,14 @@ final class VideoPlayerViewModel: ObservableObject {
     // Inputs
     let extractedText: String?
     let clipNameFromLibrary: String?
-    let clipID: UUID?                 // ✅ الجديد (للتعديل والحذف الصحيح)
+    let clipID: UUID?
 
-    // Bindings passed through from parent
+    // Bindings passed through from parent (now bound to ClipsStore)
     @Binding var allSavedClips: [SavedClip]
     @Binding var categories: [String]
     @Binding var navigateToLibrary: Bool
 
-    // Local UI state (حفظ - كما هو)
+    // Local UI state
     @Published var showSavePopup = false
     @Published var showCategoryPopup = false
     @Published var popupKind: PopupKind = .clipName
@@ -24,11 +24,11 @@ final class VideoPlayerViewModel: ObservableObject {
     @Published var clipName: String = ""
     @Published var selectedCategory: String? = nil
 
-    // Local UI state (تعديل الاسم للمحفوظ)
+    // Editing title
     @Published var isEditingTitle: Bool = false
     @Published var editedTitle: String = ""
 
-    // Local UI state (تأكيد الحذف)
+    // Delete confirm
     @Published var showDeleteConfirm: Bool = false
 
     init(
@@ -76,9 +76,7 @@ final class VideoPlayerViewModel: ObservableObject {
         return list
     }
 
-    // =========================
-    // ✅ الحفظ — نفس منطقك تمامًا
-    // =========================
+    // MARK: - Saving flow
     func onTapSaveButton() {
         popupKind = .clipName
         inputText = ""
@@ -91,13 +89,11 @@ final class VideoPlayerViewModel: ObservableObject {
 
         switch popupKind {
         case .clipName:
-            // 1) حفظ اسم المقطع ثم فتح اختيار التصنيف
             clipName = trimmed
             showSavePopup = false
             showCategoryPopup = true
 
         case .categoryName:
-            // 3) إضافة تصنيف جديد ثم حفظ المقطع
             if !categories.contains(trimmed) {
                 categories.append(trimmed)
             }
@@ -107,7 +103,6 @@ final class VideoPlayerViewModel: ObservableObject {
     }
 
     func addNewCategoryFlow() {
-        // 2-ب) المستخدم اختار إضافة تصنيف جديد → افتح نافذة اسم التصنيف
         popupKind = .categoryName
         inputText = ""
         showCategoryPopup = false
@@ -115,7 +110,6 @@ final class VideoPlayerViewModel: ObservableObject {
     }
 
     func selectCategoryAndSave(_ category: String) {
-        // 2-أ) المستخدم اختار تصنيف موجود → احفظ
         selectedCategory = category
         showCategoryPopup = false
         saveClipAndNavigate(category: category)
@@ -139,15 +133,14 @@ final class VideoPlayerViewModel: ObservableObject {
 
         allSavedClips.append(newClip)
 
+        // IMPORTANT: Do not reload from disk; persistence can be handled centrally.
         StorageManager().saveClips(allSavedClips)
         StorageManager().saveCategories(categories)
 
         navigateToLibrary = true
     }
 
-    // =========================
-    // ✅ تعديل الاسم — للمحفوظ فقط
-    // =========================
+    // MARK: - Edit title (library only)
     func startEditingTitle() {
         guard isFromLibrary else { return }
         editedTitle = clipName
@@ -164,15 +157,13 @@ final class VideoPlayerViewModel: ObservableObject {
             allSavedClips[index].name = trimmed
             StorageManager().saveClips(allSavedClips)
 
-            // تحديث العنوان في نفس الصفحة
+            // Update title in the same page
             clipName = trimmed
             isEditingTitle = false
         }
     }
 
-    // =========================
-    // ✅ حذف — للمحفوظ فقط + يرجع للمكتبة
-    // =========================
+    // MARK: - Delete (library only)
     func confirmDelete() {
         guard isFromLibrary else { return }
         showDeleteConfirm = true

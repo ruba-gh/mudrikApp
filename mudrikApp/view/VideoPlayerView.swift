@@ -8,61 +8,6 @@
 import SwiftUI
 import AVKit
 
-// MARK: - A helper to disable/enable the interactive pop gesture
-private struct InteractivePopGestureDisabler: UIViewControllerRepresentable {
-    let isDisabled: Bool
-
-    func makeUIViewController(context: Context) -> UIViewController {
-        Controller(isDisabled: isDisabled)
-    }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        if let c = uiViewController as? Controller {
-            c.isDisabled = isDisabled
-            c.updatePopGesture()
-        }
-    }
-
-    final class Controller: UIViewController, UIGestureRecognizerDelegate {
-        var isDisabled: Bool
-
-        init(isDisabled: Bool) {
-            self.isDisabled = isDisabled
-            super.init(nibName: nil, bundle: nil)
-        }
-
-        required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-        override func viewWillAppear(_ animated: Bool) {
-            super.viewWillAppear(animated)
-            updatePopGesture()
-        }
-
-        override func viewWillDisappear(_ animated: Bool) {
-            super.viewWillDisappear(animated)
-            // Re-enable when leaving, to avoid affecting other screens.
-            navigationController?.interactivePopGestureRecognizer?.isEnabled = true
-            navigationController?.interactivePopGestureRecognizer?.delegate = nil
-        }
-
-        func updatePopGesture() {
-            guard let nav = navigationController,
-                  let gesture = nav.interactivePopGestureRecognizer else { return }
-            gesture.isEnabled = !isDisabled ? true : false
-            if isDisabled {
-                gesture.delegate = self
-            } else {
-                gesture.delegate = nil
-            }
-        }
-
-        // If disabled, prevent the gesture from beginning.
-        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-            return !isDisabled
-        }
-    }
-}
-
 // MARK: - VideoPlayerView (صفحة الفيديو الرئيسية, MVVM)
 struct VideoPlayerView: View {
     @StateObject private var viewModel: VideoPlayerViewModel
@@ -264,25 +209,7 @@ struct VideoPlayerView: View {
             }
             Button("إلغاء", role: .cancel) { }
         }
-        // Hide system back button
-        .navigationBarBackButtonHidden(true)
-        // Custom Home button in the toolbar
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    // Go to app root (ContentView). Since we are inside a NavigationStack,
-                    // dismissing repeatedly will pop to root.
-                    dismiss() // Will pop one level; if you want to ensure root, see note below.
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "chevron.backward")
-                        Text("الرئيسية")
-                    }
-                    .foregroundColor(.orange)
-                }
-            }
-        }
-        // Disable the interactive pop gesture on this screen
-        .background(InteractivePopGestureDisabler(isDisabled: true))
+        // Show the system back button
+        .navigationBarBackButtonHidden(false)
     }
 }

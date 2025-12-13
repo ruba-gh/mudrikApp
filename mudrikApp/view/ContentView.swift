@@ -5,15 +5,14 @@ struct ContentView: View {
     @State private var popupKind: PopupKind = .clipName
     @State private var inputText: String = ""
     @Environment(\.colorScheme) private var colorScheme
-    
-    // ✅ State to trigger navigation
+
+    // ✅ Navigation flags
     @State private var goToCamera = false
     @State private var goToLibrary = false
-    
-    // ✅ State required by LibraryView
-    @State private var allSavedClips: [SavedClip] = []
-    @State private var categories: [String] = ["المكتبة", "قصص", "مقابلات"]
-    
+
+    // ✅ Use the shared store instead of local state arrays
+    @EnvironmentObject var store: ClipsStore
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -28,7 +27,7 @@ struct ContentView: View {
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
-                
+
                 // 🔍 Hidden NavigationLink that listens to `goToCamera`
                 NavigationLink(
                     destination: CameraView(),
@@ -37,15 +36,15 @@ struct ContentView: View {
                     EmptyView()
                 }
                 NavigationLink(
-                    destination: LibraryView(allClips: $allSavedClips, categories: $categories),
+                    destination: LibraryView(allClips: $store.clips, categories: $store.categories),
                     isActive: $goToLibrary
                 ) {
                     EmptyView()
                 }
                 .hidden()
-                
+
                 VStack(spacing: 10) {
-                    
+
                     // Logo (light/dark)
                     Image(colorScheme == .light ? "LogoLight" : "LogoDark")
                         .resizable()
@@ -53,18 +52,18 @@ struct ContentView: View {
                         .frame(width: 300, height: 300)
                         .clipShape(Circle())
                         .padding(.top, 100)
-                    
+
                     Spacer()
-                    
+
                     // 📸 مترجم — now actually navigates
                     AppButton(
                         title: "المترجم",
                         iconName: "camera.viewfinder",
                         type: .systemWhite
                     ) {
-                        goToCamera = true   // ✅ triggers navigation
+                        goToCamera = true
                     }
-                    
+
                     // 📚 Library button
                     AppButton(
                         title: "المكتبة",
@@ -82,4 +81,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(ClipsStore())
 }
