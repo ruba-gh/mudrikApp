@@ -38,6 +38,9 @@ struct CropView: View {
     // For debugging: show the recognized text on screen
     @State private var extractedTextPreview: String = ""
 
+    // Alert for no Arabic content
+    @State private var showNoArabicAlert = false
+
     var body: some View {
         VStack(spacing: 16) {
             Text("قص النص")
@@ -138,6 +141,11 @@ struct CropView: View {
             }
         }
         .padding(.horizontal)
+        .alert("لم يتم العثور على نص عربي", isPresented: $showNoArabicAlert) {
+            Button("حسناً", role: .cancel) { }
+        } message: {
+            Text("يرجى التأكد من أن الصورة تحتوي على نص عربي واضح ثم حاول مرة أخرى.")
+        }
     }
 
     // MARK: - Setup
@@ -375,15 +383,19 @@ struct CropView: View {
             DispatchQueue.main.async {
                 self.isProcessing = false
                 self.extractedTextPreview = fullText
-                self.onTextExtracted(fullText)
+
+                // Check for Arabic content
+                if self.containsArabic(fullText) {
+                    self.onTextExtracted(fullText)
+                } else {
+                    // No Arabic found -> show alert, do not navigate
+                    self.showNoArabicAlert = true
+                }
             }
         }
 
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
-
-        // If you ONLY want Arabic, keep only ar-SA.
-        // If you want both, keep "en-US" too.
         request.recognitionLanguages = ["ar-SA", "en-US"]
 
         // ✅ We normalized => orientation is .up
@@ -399,6 +411,17 @@ struct CropView: View {
                 }
             }
         }
+    }
+
+    private func containsArabic(_ text: String) -> Bool {
+        // Arabic Unicode ranges (basic + supplementary commonly used ranges)
+        // \u0600-\u06FF: Arabic
+        // \u0750-\u077F: Arabic Supplement
+        // \u08A0-\u08FF: Arabic Extended-A
+        // \uFB50-\uFDFF: Arabic Presentation Forms-A
+        // \uFE70-\uFEFF: Arabic Presentation Forms-B
+        let pattern = "[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]"
+        return text.range(of: pattern, options: .regularExpression) != nil
     }
 
     // MARK: - Conversion from view space to image pixel space
@@ -442,3 +465,4 @@ extension UIImage {
     let testImage = UIImage(named: "Image") ?? UIImage()
     return CropView(image: testImage) { _ in }
 }
+
