@@ -1,17 +1,8 @@
-//
-//  LibraryItemView.swift
-//  mudrikApp
-//
-//  Created by Ruba Alghamdi on 12/06/1447 AH.
-
 import SwiftUI
 
-// MARK: - Library Item View (MVVM)
 struct LibraryItemView: View {
-    @EnvironmentObject var store: ClipsStore
     @StateObject private var viewModel: LibraryItemViewModel
 
-    // Binding provided by parent to coordinate navigation back to Library
     @Binding var navigateToLibrary: Bool
 
     init(clip: SavedClip, navigateToLibrary: Binding<Bool>) {
@@ -24,8 +15,8 @@ struct LibraryItemView: View {
             destination: VideoPlayerView(
                 clipNameFromLibrary: viewModel.clip.name,
                 clipID: viewModel.clip.id,
-                allSavedClips: $store.clips,
-                categories: $store.categories,
+                allSavedClips: .constant([]),      // ✅ will be passed from parent store in LibraryView
+                categories: .constant([]),         // ✅ will be passed from parent store in LibraryView
                 navigateToLibrary: $navigateToLibrary
             )
         ) {
@@ -33,18 +24,12 @@ struct LibraryItemView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: viewModel.cornerRadius)
                         .fill(viewModel.backgroundColor)
-                        .frame(
-                            width: viewModel.tileSize.width,
-                            height: viewModel.tileSize.height
-                        )
+                        .frame(width: viewModel.tileSize.width, height: viewModel.tileSize.height)
 
                     Image(systemName: viewModel.iconName)
                         .resizable()
                         .scaledToFit()
-                        .frame(
-                            width: viewModel.iconSize.width,
-                            height: viewModel.iconSize.height
-                        )
+                        .frame(width: viewModel.iconSize.width, height: viewModel.iconSize.height)
                         .foregroundColor(viewModel.iconColor)
                 }
 
@@ -57,4 +42,3 @@ struct LibraryItemView: View {
         }
     }
 }
-

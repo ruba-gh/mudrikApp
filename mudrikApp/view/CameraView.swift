@@ -178,7 +178,7 @@ struct CameraView: View {
                     // NAVIGATE TO CROP (WITH ALERT ON THE DESTINATION SCREEN)
                     NavigationLink("", isActive: $showCropView) {
                         if let selectedImage {
-                            CropScreen(image: selectedImage) { validArabicText in
+                            CropView(image: selectedImage) { validArabicText in
                                 extractedText = validArabicText
                                 navigateToVideoPlayer = true
                             }
@@ -203,7 +203,7 @@ struct CameraView: View {
 
                     // Hidden NavigationLink to LibraryView
                     NavigationLink(
-                        destination: LibraryView(allClips: $store.clips, categories: $store.categories),
+                        destination: LibraryView(store: store),
                         isActive: $navigateToLibrary
                     ) {
                         EmptyView()
@@ -275,45 +275,3 @@ struct CameraView: View {
     }
 }
 
-// MARK: - Crop destination screen (owns the alert because THIS screen is visible)
-private struct CropScreen: View {
-    let image: UIImage
-    let onValidArabicText: (String) -> Void
-
-    @State private var showArabicOnlyAlert = false
-
-    var body: some View {
-        CropView(image: image) { text in
-            let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-
-            DispatchQueue.main.async {
-                guard !cleaned.isEmpty else { return }
-
-                guard cleaned.containsArabic else {
-                    showArabicOnlyAlert = true
-                    return
-                }
-
-                onValidArabicText(cleaned)
-            }
-        }
-        .alert("تنبيه", isPresented: $showArabicOnlyAlert) {
-            Button("حسناً", role: .cancel) {}
-        } message: {
-            Text("يمكن ترجمة النصوص المكتوبة باللغة العربية فقط.")
-        }
-    }
-}
-
-// MARK: - Arabic detection
-extension String {
-    var containsArabic: Bool {
-        let pattern = "[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF]"
-        return range(of: pattern, options: .regularExpression) != nil
-    }
-}
-
-#Preview {
-    CameraView()
-        .environmentObject(ClipsStore())
-}

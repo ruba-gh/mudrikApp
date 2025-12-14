@@ -36,7 +36,7 @@ struct ContentView: View {
                     EmptyView()
                 }
                 NavigationLink(
-                    destination: LibraryView(allClips: $store.clips, categories: $store.categories),
+                    destination: LibraryView(store: store),
                     isActive: $goToLibrary
                 ) {
                     EmptyView()

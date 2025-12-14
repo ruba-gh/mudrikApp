@@ -12,6 +12,7 @@ import AVKit
 struct VideoPlayerView: View {
     @StateObject private var viewModel: VideoPlayerViewModel
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var store: ClipsStore
 
     init(
         extractedText: String? = nil,
@@ -36,7 +37,7 @@ struct VideoPlayerView: View {
 
             // Hidden NavigationLink to LibraryView
             NavigationLink(
-                destination: LibraryView(allClips: $viewModel.allSavedClips, categories: $viewModel.categories),
+                destination: LibraryView(store: store),
                 isActive: $viewModel.navigateToLibrary
             ) {
                 EmptyView()
