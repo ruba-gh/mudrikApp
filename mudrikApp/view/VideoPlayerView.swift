@@ -51,7 +51,6 @@ struct VideoPlayerView: View {
             }
             .hidden()
 
-            Color.white.ignoresSafeArea()
 
             VStack(spacing: 20) {
 

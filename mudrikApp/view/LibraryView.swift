@@ -16,7 +16,7 @@ struct LibraryView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color.white.ignoresSafeArea()
+            
 
             VStack(spacing: 0) {
                 // Categories
