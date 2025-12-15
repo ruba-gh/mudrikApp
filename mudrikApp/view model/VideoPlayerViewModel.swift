@@ -11,10 +11,13 @@ final class VideoPlayerViewModel: ObservableObject {
     let clipNameFromLibrary: String?
     let clipID: UUID?
 
-    // Bindings passed through from parent (now bound to ClipsStore)
+    // Bindings used for OCR flow only
     @Binding var allSavedClips: [SavedClip]
     @Binding var categories: [String]
     @Binding var navigateToLibrary: Bool
+
+    // Environment store used for library flow
+    private weak var store: ClipsStore?
 
     // Local UI state
     @Published var showSavePopup = false
@@ -37,7 +40,8 @@ final class VideoPlayerViewModel: ObservableObject {
         clipID: UUID? = nil,
         allSavedClips: Binding<[SavedClip]>,
         categories: Binding<[String]>,
-        navigateToLibrary: Binding<Bool>
+        navigateToLibrary: Binding<Bool>,
+        store: ClipsStore?
     ) {
         self.extractedText = extractedText
         self.clipNameFromLibrary = clipNameFromLibrary
@@ -47,9 +51,26 @@ final class VideoPlayerViewModel: ObservableObject {
         self._categories = categories
         self._navigateToLibrary = navigateToLibrary
 
-        // لو فتحنا مقطع محفوظ: جهّز الاسم الحالي للتعديل
-        if let id = clipID,
-           let clip = allSavedClips.wrappedValue.first(where: { $0.id == id }) {
+        self.store = store
+
+        // If opened from library, prepare current title for editing
+        if let id = clipID {
+            if let clip = resolveClipsArray().first(where: { $0.id == id }) {
+                self.clipName = clip.name
+                self.editedTitle = clip.name
+            } else {
+                self.clipName = clipNameFromLibrary ?? ""
+                self.editedTitle = clipNameFromLibrary ?? ""
+            }
+        }
+    }
+
+    func injectStoreIfNeeded(_ store: ClipsStore) {
+        guard self.store == nil else { return }
+        self.store = store
+
+        // Refresh title from store if opened from library
+        if let id = clipID, let clip = store.clips.first(where: { $0.id == id }) {
             self.clipName = clip.name
             self.editedTitle = clip.name
         }
@@ -76,7 +97,39 @@ final class VideoPlayerViewModel: ObservableObject {
         return list
     }
 
-    // MARK: - Saving flow
+    // MARK: - Resolve correct clips source
+    private func resolveClipsArray() -> [SavedClip] {
+        if isFromLibrary, let store { return store.clips }
+        return allSavedClips
+    }
+
+    private func updateClip(id: UUID, mutate: (inout SavedClip) -> Void) {
+        if isFromLibrary, let store {
+            if let idx = store.clips.firstIndex(where: { $0.id == id }) {
+                var clip = store.clips[idx]
+                mutate(&clip)
+                store.clips[idx] = clip
+                StorageManager().saveClips(store.clips)
+            }
+        } else {
+            if let idx = allSavedClips.firstIndex(where: { $0.id == id }) {
+                mutate(&allSavedClips[idx])
+                StorageManager().saveClips(allSavedClips)
+            }
+        }
+    }
+
+    private func removeClip(id: UUID) {
+        if isFromLibrary, let store {
+            store.clips.removeAll { $0.id == id }
+            StorageManager().saveClips(store.clips)
+        } else {
+            allSavedClips.removeAll { $0.id == id }
+            StorageManager().saveClips(allSavedClips)
+        }
+    }
+
+    // MARK: - Saving flow (OCR only) – unchanged
     func onTapSaveButton() {
         popupKind = .clipName
         inputText = ""
@@ -133,7 +186,6 @@ final class VideoPlayerViewModel: ObservableObject {
 
         allSavedClips.append(newClip)
 
-        // IMPORTANT: Do not reload from disk; persistence can be handled centrally.
         StorageManager().saveClips(allSavedClips)
         StorageManager().saveCategories(categories)
 
@@ -153,14 +205,14 @@ final class VideoPlayerViewModel: ObservableObject {
         let trimmed = editedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        if let index = allSavedClips.firstIndex(where: { $0.id == id }) {
-            allSavedClips[index].name = trimmed
-            StorageManager().saveClips(allSavedClips)
-
-            // Update title in the same page
-            clipName = trimmed
-            isEditingTitle = false
+        // Update in the shared store so Library grid reflects immediately
+        updateClip(id: id) { clip in
+            clip.name = trimmed
         }
+
+        // Update video page title immediately
+        clipName = trimmed
+        isEditingTitle = false
     }
 
     // MARK: - Delete (library only)
@@ -172,9 +224,8 @@ final class VideoPlayerViewModel: ObservableObject {
     func deleteClip() {
         guard isFromLibrary, let id = clipID else { return }
 
-        allSavedClips.removeAll { $0.id == id }
-        StorageManager().saveClips(allSavedClips)
-
+        removeClip(id: id)
         navigateToLibrary = true
     }
 }
+

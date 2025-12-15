@@ -17,10 +17,13 @@ struct VideoPlayerView: View {
     // UIKit alerts
     @State private var alertConfig: AlertConfig? = nil
 
+    // Focus for inline editing
+    @FocusState private var titleFieldFocused: Bool
+
     init(
         extractedText: String? = nil,
         clipNameFromLibrary: String? = nil,
-        clipID: UUID? = nil, // ✅ الجديد
+        clipID: UUID? = nil,
         allSavedClips: Binding<[SavedClip]>,
         categories: Binding<[String]>,
         navigateToLibrary: Binding<Bool>
@@ -31,7 +34,8 @@ struct VideoPlayerView: View {
             clipID: clipID,
             allSavedClips: allSavedClips,
             categories: categories,
-            navigateToLibrary: navigateToLibrary
+            navigateToLibrary: navigateToLibrary,
+            store: nil // injected onAppear for library flow
         ))
     }
 
@@ -113,14 +117,45 @@ struct VideoPlayerView: View {
                 }
             }
         }
-        .navigationTitle(viewModel.pageTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // Principal title area: static vs inline TextField when editing
+            ToolbarItem(placement: .principal) {
+                if viewModel.isFromLibrary && viewModel.isEditingTitle {
+                    TextField("اسم المقطع", text: $viewModel.editedTitle, onCommit: {
+                        viewModel.saveEditedTitle()
+                    })
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 240)
+                    .submitLabel(.done)
+                    .focused($titleFieldFocused)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            self.titleFieldFocused = true
+                        }
+                    }
+                } else {
+                    VStack(spacing: 2) {
+                        Text(viewModel.pageTitle)
+                            .font(.headline)
+                        if viewModel.isFromOCR {
+                            Text("وجّه الكاميرا نحو النص المراد ترجمته إلى لغة الإشارة")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                }
+            }
+
+            // Trailing edit/save button
             if viewModel.isFromLibrary {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if viewModel.isEditingTitle {
                         Button {
                             viewModel.saveEditedTitle()
+                            titleFieldFocused = false
                         } label: {
                             Image(systemName: "checkmark")
                                 .foregroundColor(.orange)
@@ -147,6 +182,10 @@ struct VideoPlayerView: View {
         }
         // System alert presenter
         .systemAlert(config: $alertConfig)
+        .onAppear {
+            // Ensure the VM updates the shared store (library flow)
+            viewModel.injectStoreIfNeeded(store)
+        }
     }
 
     // MARK: - Alerts / Sheets (UIKit)
@@ -171,7 +210,6 @@ struct VideoPlayerView: View {
             actions: [
                 AlertAction("إلغاء", style: .cancel, handler: nil),
                 AlertAction("التالي", style: .default, handler: {
-                    // After entering clip name, show category picker as a centered alert
                     viewModel.clipName = viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
                     presentCategoryAlert()
                 })
@@ -184,25 +222,25 @@ struct VideoPlayerView: View {
 
         var actions: [AlertAction] = []
 
-        // 1) Put "Add new category" first
+        // 1) Add new category
         actions.append(AlertAction("إضافة تصنيف جديد", style: .default, handler: {
             presentNewCategoryAlert()
         }))
 
-        // 2) Then list existing categories
+        // 2) Existing categories
         actions.append(contentsOf: categories.map { cat in
             AlertAction(cat, style: .default, handler: {
                 viewModel.selectCategoryAndSave(cat)
             })
         })
 
-        // 3) Finally, Cancel
+        // 3) Cancel
         actions.append(AlertAction("إلغاء", style: .cancel, handler: nil))
 
         alertConfig = AlertConfig(
             title: "اختر التصنيف",
             message: nil,
-            preferredStyle: .alert, // centered on iPhone
+            preferredStyle: .alert,
             textFields: [],
             actions: actions
         )
@@ -227,8 +265,7 @@ struct VideoPlayerView: View {
             ],
             actions: [
                 AlertAction("إلغاء", style: .cancel, handler: {
-                    // Optionally return to category choices:
-                    // presentCategoryAlert()
+                    // Optional: presentCategoryAlert()
                 }),
                 AlertAction("حفظ", style: .default, handler: {
                     let trimmed = viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -243,3 +280,4 @@ struct VideoPlayerView: View {
         )
     }
 }
+

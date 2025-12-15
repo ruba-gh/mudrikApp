@@ -107,4 +107,11 @@ final class ClipsStore: ObservableObject {
         persistCategories()
         persistClips()
     }
+    func persistAllPublic() { // rename however you like
+        storage.saveCategories(categories)
+        storage.saveClips(clips)
+    }
+    func persistCategoriesPublic() {
+        storage.saveCategories(categories)
+    }
 }

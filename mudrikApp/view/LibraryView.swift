@@ -60,7 +60,7 @@ struct LibraryView: View {
                     ) {
                         ForEach(viewModel.filteredClips) { clip in
                             LibraryItemView(
-                                clip: clip,
+                                clipID: clip.id,
                                 navigateToLibrary: $navigateToLibrary
                             )
                         }
