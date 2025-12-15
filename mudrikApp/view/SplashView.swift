@@ -120,7 +120,7 @@ struct SplashView: View {
             animate = true
 
             // Auto navigate after 2.3 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 navigate = true
             }
         }

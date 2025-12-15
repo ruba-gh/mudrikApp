@@ -14,6 +14,9 @@ struct VideoPlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: ClipsStore
 
+    // UIKit alerts
+    @State private var alertConfig: AlertConfig? = nil
+
     init(
         extractedText: String? = nil,
         clipNameFromLibrary: String? = nil,
@@ -124,11 +127,11 @@ struct VideoPlayerView: View {
                 Spacer()
 
                 // =========================
-                // ✅ OCR SAVE BUTTON (كما كان)
+                // ✅ OCR SAVE BUTTON
                 // =========================
                 if viewModel.isFromOCR {
                     Button(action: {
-                        viewModel.onTapSaveButton()
+                        presentClipNameAlert()
                     }) {
                         Image(systemName: "square.and.arrow.down")
                             .resizable()
@@ -165,52 +168,109 @@ struct VideoPlayerView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-
-            // =========================
-            // ✅ CATEGORY POPUP (كما كان)
-            // =========================
-            if viewModel.showCategoryPopup {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-
-                CategoryPopup(
-                    categories: viewModel.categoriesForPopup,
-                    onAddNewCategory: {
-                        viewModel.addNewCategoryFlow()
-                    },
-                    onCategoryTap: { category in
-                        viewModel.selectCategoryAndSave(category)
-                    }
-                )
-            }
-
-            // =========================
-            // ✅ TEXTFIELD POPUP (كما كان)
-            // =========================
-            if viewModel.showSavePopup {
-                Color.black.opacity(0.5)
-                    .ignoresSafeArea()
-
-                TextFieldAlert(
-                    kind: viewModel.popupKind,
-                    text: $viewModel.inputText,
-                    onCancel: {
-                        viewModel.showSavePopup = false
-                    },
-                    onConfirm: {
-                        viewModel.handleTextFieldConfirm()
-                    }
-                )
-            }
         }
-        // ✅ تأكيد الحذف
+        // ✅ حذف
         .alert("هل تريد حذف الفيديو؟", isPresented: $viewModel.showDeleteConfirm) {
             Button("نعم", role: .destructive) {
                 viewModel.deleteClip()
             }
             Button("إلغاء", role: .cancel) { }
         }
-        // Show the system back button
-        .navigationBarBackButtonHidden(false)
+        // System alert presenter
+        .systemAlert(config: $alertConfig)
+    }
+
+    // MARK: - Alerts / Sheets (UIKit)
+
+    private func presentClipNameAlert() {
+        viewModel.popupKind = .clipName
+        viewModel.inputText = ""
+
+        alertConfig = AlertConfig(
+            title: "اسم المقطع",
+            message: nil,
+            preferredStyle: .alert,
+            textFields: [
+                AlertTextFieldConfig(
+                    placeholder: "اكتب اسم المقطع",
+                    text: $viewModel.inputText,
+                    isSecure: false,
+                    keyboardType: .default,
+                    textContentType: .name
+                )
+            ],
+            actions: [
+                AlertAction("إلغاء", style: .cancel, handler: nil),
+                AlertAction("التالي", style: .default, handler: {
+                    // After entering clip name, show category picker as a centered alert
+                    viewModel.clipName = viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    presentCategoryAlert()
+                })
+            ]
+        )
+    }
+
+    private func presentCategoryAlert() {
+        let categories = viewModel.categoriesForPopup
+
+        var actions: [AlertAction] = []
+
+        // 1) Put "Add new category" first
+        actions.append(AlertAction("إضافة تصنيف جديد", style: .default, handler: {
+            presentNewCategoryAlert()
+        }))
+
+        // 2) Then list existing categories
+        actions.append(contentsOf: categories.map { cat in
+            AlertAction(cat, style: .default, handler: {
+                viewModel.selectCategoryAndSave(cat)
+            })
+        })
+
+        // 3) Finally, Cancel
+        actions.append(AlertAction("إلغاء", style: .cancel, handler: nil))
+
+        alertConfig = AlertConfig(
+            title: "اختر التصنيف",
+            message: nil,
+            preferredStyle: .alert, // centered on iPhone
+            textFields: [],
+            actions: actions
+        )
+    }
+
+    private func presentNewCategoryAlert() {
+        viewModel.popupKind = .categoryName
+        viewModel.inputText = ""
+
+        alertConfig = AlertConfig(
+            title: "اسم التصنيف",
+            message: nil,
+            preferredStyle: .alert,
+            textFields: [
+                AlertTextFieldConfig(
+                    placeholder: "اكتب اسم التصنيف",
+                    text: $viewModel.inputText,
+                    isSecure: false,
+                    keyboardType: .default,
+                    textContentType: .name
+                )
+            ],
+            actions: [
+                AlertAction("إلغاء", style: .cancel, handler: {
+                    // Optionally return to category choices:
+                    // presentCategoryAlert()
+                }),
+                AlertAction("حفظ", style: .default, handler: {
+                    let trimmed = viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    if !viewModel.categories.contains(trimmed) {
+                        viewModel.categories.append(trimmed)
+                        StorageManager().saveCategories(viewModel.categories)
+                    }
+                    viewModel.selectCategoryAndSave(trimmed)
+                })
+            ]
+        )
     }
 }

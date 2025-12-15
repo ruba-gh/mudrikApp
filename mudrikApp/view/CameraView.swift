@@ -23,8 +23,8 @@ struct CameraView: View {
     @State private var showPhotoPicker = false
     @State private var showFilePicker = false
 
-    // Import popup
-    @State private var showImportPopup = false
+    // UIKit alert config (replaces custom import popup)
+    @State private var alertConfig: AlertConfig? = nil
 
     // Text extracted
     @State private var extractedText: String = ""
@@ -85,7 +85,7 @@ struct CameraView: View {
                                 iconName: "square.and.arrow.down",
                                 type: .systemWhite
                             ) {
-                                showImportPopup = true
+                                presentImportAlert()
                             }
                         }
                         .padding(.horizontal, 32)
@@ -141,40 +141,6 @@ struct CameraView: View {
                         .padding(.bottom, 32)
                     }
 
-                    // IMPORT POPUP OVERLAY
-                    if showImportPopup {
-                        Color.black.opacity(0.45)
-                            .ignoresSafeArea()
-                            .transition(.opacity)
-
-                        VStack {
-                            VStack(spacing: 16) {
-                                AppButton(
-                                    title: "ألبوم الصور",
-                                    iconName: "photo.on.rectangle",
-                                    type: .orange
-                                ) {
-                                    showImportPopup = false
-                                    showPhotoPicker = true
-                                }
-
-                                AppButton(
-                                    title: "الملفات",
-                                    iconName: "folder",
-                                    type: .systemWhite
-                                ) {
-                                    showImportPopup = false
-                                    showFilePicker = true
-                                }
-                            }
-                            .padding(20)
-                            .background(Color.black)
-                            .cornerRadius(24)
-                        }
-                        .padding(.horizontal, 24)
-                        .transition(.scale)
-                    }
-
                     // NAVIGATE TO CROP (WITH ALERT ON THE DESTINATION SCREEN)
                     NavigationLink("", isActive: $showCropView) {
                         if let selectedImage {
@@ -223,7 +189,26 @@ struct CameraView: View {
             .onChange(of: selectedImage) { img in
                 if img != nil { showCropView = true }
             }
+            .systemAlert(config: $alertConfig)
         }
+    }
+
+    private func presentImportAlert() {
+        alertConfig = AlertConfig(
+            title: "استيراد",
+            message: nil,
+            preferredStyle: .alert, // centered on iPhone
+            textFields: [],
+            actions: [
+                AlertAction("ألبوم الصور", style: .default, handler: {
+                    showPhotoPicker = true
+                }),
+                AlertAction("الملفات", style: .default, handler: {
+                    showFilePicker = true
+                }),
+                AlertAction("إلغاء", style: .cancel, handler: nil)
+            ]
+        )
     }
 
     // MARK: - Guide rect (single source of truth)
@@ -274,4 +259,3 @@ struct CameraView: View {
         return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
     }
 }
-

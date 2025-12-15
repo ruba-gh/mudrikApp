@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		97B20E512EEF1F0D00D0632E /* UIKitAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B20E502EEF1F0D00D0632E /* UIKitAlerts.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		976AB3912EDCA88F0052D978 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		976AB3832EDCA88E0052D978 /* mudrikApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mudrikApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		976AB3902EDCA88F0052D978 /* mudrikAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mudrikAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		976AB39A2EDCA88F0052D978 /* mudrikAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mudrikAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		97B20E502EEF1F0D00D0632E /* UIKitAlerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitAlerts.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +84,7 @@
 				976AB3932EDCA88F0052D978 /* mudrikAppTests */,
 				976AB39D2EDCA88F0052D978 /* mudrikAppUITests */,
 				976AB3842EDCA88E0052D978 /* Products */,
+				97B20E502EEF1F0D00D0632E /* UIKitAlerts.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -236,6 +242,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97B20E512EEF1F0D00D0632E /* UIKitAlerts.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

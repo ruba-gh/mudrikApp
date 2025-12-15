@@ -6,6 +6,9 @@ struct LibraryView: View {
 
     @State private var navigateToLibrary = false
 
+    // UIKit alert config
+    @State private var alertConfig: AlertConfig? = nil
+
     // Explicit init that injects the environment store into the view model
     init(store: ClipsStore) {
         _viewModel = StateObject(wrappedValue: LibraryViewModel(store: store))
@@ -22,7 +25,7 @@ struct LibraryView: View {
                         .foregroundColor(.black)
                     Spacer()
                     Button {
-                        viewModel.beginAddCategory()
+                        presentAddCategoryAlert()
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 22, weight: .semibold))
@@ -97,18 +100,6 @@ struct LibraryView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 10)
             }
-
-            // Add Category popup
-            if viewModel.showTextFieldAlert {
-                Color.black.opacity(0.45).ignoresSafeArea()
-
-                TextFieldAlert(
-                    kind: viewModel.textFieldKind,
-                    text: $viewModel.textFieldValue,
-                    onCancel: { viewModel.showTextFieldAlert = false },
-                    onConfirm: { viewModel.confirmAddCategory() }
-                )
-            }
         }
         .navigationTitle("المكتبة")
         .navigationBarTitleDisplayMode(.inline)
@@ -127,5 +118,31 @@ struct LibraryView: View {
                 Text("سيتم نقل المقاطع إلى '\(viewModel.defaultCategory)'.")
             }
         }
+        .systemAlert(config: $alertConfig)
+    }
+
+    private func presentAddCategoryAlert() {
+        viewModel.textFieldValue = ""
+
+        alertConfig = AlertConfig(
+            title: "اسم التصنيف",
+            message: nil,
+            preferredStyle: .alert,
+            textFields: [
+                AlertTextFieldConfig(
+                    placeholder: "اكتب اسم التصنيف",
+                    text: $viewModel.textFieldValue,
+                    isSecure: false,
+                    keyboardType: .default,
+                    textContentType: .name
+                )
+            ],
+            actions: [
+                AlertAction("إلغاء", style: .cancel, handler: nil),
+                AlertAction("إضافة", style: .default, handler: {
+                    viewModel.confirmAddCategory()
+                })
+            ]
+        )
     }
 }
