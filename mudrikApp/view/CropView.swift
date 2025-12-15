@@ -43,16 +43,6 @@ struct CropView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("قص النص")
-                .font(.largeTitle)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text("اضبط الإطار إلى الحجم المطلوب")
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.bottom, 30)
-
             GeometryReader { _ in
                 ZStack {
                     Color(.systemBackground)
@@ -145,6 +135,20 @@ struct CropView: View {
             Button("حسناً", role: .cancel) { }
         } message: {
             Text("يرجى التأكد من أن الصورة تحتوي على نص عربي واضح ثم حاول مرة أخرى.")
+        }
+        .navigationTitle("قص النص")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 2) {
+                    Text("قص النص")
+                        .font(.headline)
+                    Text("اضبط الإطار إلى الحجم المطلوب")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+            }
         }
     }
 
@@ -465,4 +469,3 @@ extension UIImage {
     let testImage = UIImage(named: "Image") ?? UIImage()
     return CropView(image: testImage) { _ in }
 }
-

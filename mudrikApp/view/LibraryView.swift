@@ -19,22 +19,6 @@ struct LibraryView: View {
             Color.white.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                HStack {
-                    Text("التصنيفات")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                    Spacer()
-                    Button {
-                        presentAddCategoryAlert()
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundColor(.orange)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-
                 // Categories
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
@@ -104,6 +88,18 @@ struct LibraryView: View {
         .navigationTitle("المكتبة")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(false)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    presentAddCategoryAlert()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.orange)
+                }
+                .accessibilityLabel("إضافة تصنيف")
+            }
+        }
         .alert("حذف التصنيف؟", isPresented: $viewModel.showDeleteConfirm) {
             Button("نعم", role: .destructive) { viewModel.confirmDeleteSelectedCategory() }
             Button("إلغاء", role: .cancel) { }

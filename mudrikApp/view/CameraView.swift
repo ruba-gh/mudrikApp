@@ -62,20 +62,6 @@ struct CameraView: View {
                         .position(x: guide.midX, y: guide.midY)
 
                     VStack {
-                        // HEADER
-                        VStack(spacing: 8) {
-                            Text("التقط صورة للنص")
-                                .font(.largeTitle)
-                                .multilineTextAlignment(.trailing)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-
-                            Text("وجّه الكاميرا نحو النص المراد ترجمته إلى لغة الإشارة")
-                                .multilineTextAlignment(.trailing)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                .padding(.bottom, 30)
-                        }
-                        .padding()
-
                         Spacer()
 
                         // IMPORT BUTTON
@@ -190,12 +176,26 @@ struct CameraView: View {
                 if img != nil { showCropView = true }
             }
             .systemAlert(config: $alertConfig)
+            .navigationTitle("التقط صورة للنص")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 2) {
+                        Text("التقط صورة للنص")
+                            .font(.headline)
+                        Text("وجّه الكاميرا نحو النص المراد ترجمته إلى لغة الإشارة")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+            }
         }
     }
 
     private func presentImportAlert() {
         alertConfig = AlertConfig(
-            title: "استيراد",
+            title: "استيراد من",
             message: nil,
             preferredStyle: .alert, // centered on iPhone
             textFields: [],

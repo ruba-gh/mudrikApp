@@ -63,6 +63,7 @@ struct ContentView: View {
                     ) {
                         goToCamera = true
                     }
+                    .font(.title2) // Increase button text size locally
 
                     // 📚 Library button
                     AppButton(
@@ -72,9 +73,11 @@ struct ContentView: View {
                     ) {
                         goToLibrary = true
                     }
+                    .font(.title2) // Increase button text size locally
                 }
                 .padding()
             }
+            // Removed navigationTitle and display mode as requested
         }
     }
 }

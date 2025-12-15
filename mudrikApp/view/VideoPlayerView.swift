@@ -51,59 +51,7 @@ struct VideoPlayerView: View {
 
             VStack(spacing: 20) {
 
-                // =========================
-                // ✅ HEADER
-                // =========================
-                if viewModel.isFromOCR {
-                    HStack {
-                        Spacer()
-                        Text(viewModel.pageTitle)
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
-                        Spacer()
-                    }
-                    .padding(.top, 20)
-                } else {
-                    HStack(spacing: 12) {
-                        Spacer()
-
-                        if viewModel.isEditingTitle {
-                            TextField("", text: $viewModel.editedTitle)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(maxWidth: 240)
-
-                            Button {
-                                viewModel.saveEditedTitle()
-                            } label: {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.orange)
-                                    .font(.system(size: 20, weight: .bold))
-                            }
-                        } else {
-                            Text(viewModel.pageTitle)
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
-
-                            Button {
-                                viewModel.startEditingTitle()
-                            } label: {
-                                Image(systemName: "pencil")
-                                    .foregroundColor(.orange)
-                                    .font(.system(size: 18, weight: .semibold))
-                            }
-                        }
-
-                        Spacer()
-                    }
-                    .padding(.top, 10)
-                    .padding(.horizontal, 16)
-                }
-
-                // =========================
                 // 🎥 VIDEO
-                // =========================
                 VStack {
                     if let videoURL = Bundle.main.url(forResource: "avatarr", withExtension: "mp4") {
                         VideoPlayer(player: AVPlayer(url: videoURL))
@@ -126,9 +74,7 @@ struct VideoPlayerView: View {
 
                 Spacer()
 
-                // =========================
                 // ✅ OCR SAVE BUTTON
-                // =========================
                 if viewModel.isFromOCR {
                     Button(action: {
                         presentClipNameAlert()
@@ -147,9 +93,7 @@ struct VideoPlayerView: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
 
-                // =========================
                 // ✅ DELETE BUTTON (للمحفوظ فقط)
-                // =========================
                 if viewModel.isFromLibrary {
                     Button {
                         viewModel.confirmDelete()
@@ -166,6 +110,31 @@ struct VideoPlayerView: View {
                     .padding(.bottom, 30)
                     .padding(.leading, 30)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .navigationTitle(viewModel.pageTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if viewModel.isFromLibrary {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if viewModel.isEditingTitle {
+                        Button {
+                            viewModel.saveEditedTitle()
+                        } label: {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.orange)
+                        }
+                        .accessibilityLabel("حفظ العنوان")
+                    } else {
+                        Button {
+                            viewModel.startEditingTitle()
+                        } label: {
+                            Image(systemName: "pencil")
+                                .foregroundColor(.orange)
+                        }
+                        .accessibilityLabel("تعديل العنوان")
+                    }
                 }
             }
         }
