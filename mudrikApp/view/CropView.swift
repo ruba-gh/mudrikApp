@@ -105,16 +105,40 @@ struct CropView: View {
             }
 
             if !extractedTextPreview.isEmpty {
-                Text("النص المستخرج (تجريبي):")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 12) {
 
-                ScrollView {
-                    Text(extractedTextPreview)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack {
+                        Text("النص المستخرج")
+                            .font(.headline)
+
+                        Spacer()
+
+                        Text("\(extractedTextPreview.count) حرف")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    ScrollView {
+                        Text(extractedTextPreview)
+                            .font(.system(size: 17)) // ✅ readable
+                            .multilineTextAlignment(.trailing)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(16)
+                    }
+                    .frame(height: 180) // ✅ BIG enough to read
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.orange.opacity(0.4), lineWidth: 1.5)
+                    )
                 }
-                .frame(maxHeight: 160)
+                .padding(.top, 6)
             }
+
+
 
             if let errorMessage {
                 Text(errorMessage)

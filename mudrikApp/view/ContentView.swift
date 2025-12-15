@@ -79,6 +79,7 @@ struct ContentView: View {
             }
             // Removed navigationTitle and display mode as requested
         }
+        .navigationBarBackButtonHidden(true)
     }
 }
 

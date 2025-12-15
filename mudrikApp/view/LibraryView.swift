@@ -99,6 +99,19 @@ struct LibraryView: View {
                 }
                 .accessibilityLabel("إضافة تصنيف")
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink {
+                    ContentView()
+                        .environmentObject(store)
+                } label: {
+                    Image(systemName: "house.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.orange)
+                        .frame(width: 38, height: 38)
+                        
+                }
+                .accessibilityLabel("الصفحة الرئيسية")
+            }
         }
         .alert("حذف التصنيف؟", isPresented: $viewModel.showDeleteConfirm) {
             Button("نعم", role: .destructive) { viewModel.confirmDeleteSelectedCategory() }

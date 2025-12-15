@@ -35,13 +35,12 @@ struct VideoPlayerView: View {
             allSavedClips: allSavedClips,
             categories: categories,
             navigateToLibrary: navigateToLibrary,
-            store: nil // injected onAppear for library flow
+            store: nil
         ))
     }
 
     var body: some View {
         ZStack {
-
             // Hidden NavigationLink to LibraryView
             NavigationLink(
                 destination: LibraryView(store: store),
@@ -51,11 +50,11 @@ struct VideoPlayerView: View {
             }
             .hidden()
 
-
+            // Main page layout
             VStack(spacing: 20) {
-
+                Spacer().frame(height: 18)
                 // 🎥 VIDEO
-                VStack {
+                VStack(spacing: 20){
                     if let videoURL = Bundle.main.url(forResource: "avatarr", withExtension: "mp4") {
                         VideoPlayer(player: AVPlayer(url: videoURL))
                             .frame(height: 350)
@@ -75,28 +74,17 @@ struct VideoPlayerView: View {
                 }
                 .padding(.horizontal, 20)
 
-                Spacer()
+                // ✅ pushes the content so it doesn't feel stuck to the top
+                Spacer(minLength: 0)
+            }
+            // ✅ makes the VStack fill the screen (fixes “camped at top”)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
 
-                // ✅ OCR SAVE BUTTON
-                if viewModel.isFromOCR {
-                    Button(action: {
-                        presentClipNameAlert()
-                    }) {
-                        Image(systemName: "square.and.arrow.down")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(.white)
-                            .padding(20)
-                            .background(Color.orange)
-                            .clipShape(Circle())
-                    }
-                    .padding(.bottom, 30)
-                    .padding(.trailing, 30)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-
-                // ✅ DELETE BUTTON (للمحفوظ فقط)
+        // ✅ Bottom actions pinned to bottom safely (not fighting with layout)
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                // ✅ DELETE BUTTON (library only) - bottom left
                 if viewModel.isFromLibrary {
                     Button {
                         viewModel.confirmDelete()
@@ -110,15 +98,36 @@ struct VideoPlayerView: View {
                             .background(Color.orange)
                             .clipShape(Circle())
                     }
-                    .padding(.bottom, 30)
-                    .padding(.leading, 30)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Spacer()
+
+                // ✅ OCR SAVE BUTTON (OCR only) - bottom right
+                if viewModel.isFromOCR {
+                    Button {
+                        presentClipNameAlert()
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 30, height: 30)
+                            .foregroundColor(.white)
+                            .padding(20)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                    }
                 }
             }
+            .padding(.horizontal, 30)
+            .padding(.top, 10)
+            .padding(.bottom, 10)
+            .background(.clear)
         }
+
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Principal title area: static vs inline TextField when editing
+
+            // Title / Editor
             ToolbarItem(placement: .principal) {
                 if viewModel.isFromLibrary && viewModel.isEditingTitle {
                     TextField("اسم المقطع", text: $viewModel.editedTitle, onCommit: {
@@ -131,7 +140,7 @@ struct VideoPlayerView: View {
                     .focused($titleFieldFocused)
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                            self.titleFieldFocused = true
+                            titleFieldFocused = true
                         }
                     }
                 } else {
@@ -139,7 +148,7 @@ struct VideoPlayerView: View {
                         Text(viewModel.pageTitle)
                             .font(.headline)
                         if viewModel.isFromOCR {
-                            Text("وجّه الكاميرا نحو النص المراد ترجمته إلى لغة الإشارة")
+                            Text("")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -148,7 +157,9 @@ struct VideoPlayerView: View {
                 }
             }
 
-            // Trailing edit/save button
+            
+
+            // Edit / Save
             if viewModel.isFromLibrary {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if viewModel.isEditingTitle {
@@ -159,7 +170,6 @@ struct VideoPlayerView: View {
                             Image(systemName: "checkmark")
                                 .foregroundColor(.orange)
                         }
-                        .accessibilityLabel("حفظ العنوان")
                     } else {
                         Button {
                             viewModel.startEditingTitle()
@@ -167,27 +177,41 @@ struct VideoPlayerView: View {
                             Image(systemName: "pencil")
                                 .foregroundColor(.orange)
                         }
-                        .accessibilityLabel("تعديل العنوان")
                     }
                 }
             }
+            // ✅ HOME BUTTON (NO animation)
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink {
+                    ContentView()
+                        .environmentObject(store)
+                } label: {
+                    Image(systemName: "house.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.orange)
+                        .frame(width: 38, height: 38)
+                        
+                }
+                .accessibilityLabel("الصفحة الرئيسية")
+            }
         }
-        // ✅ حذف
+        
+
         .alert("هل تريد حذف الفيديو؟", isPresented: $viewModel.showDeleteConfirm) {
             Button("نعم", role: .destructive) {
                 viewModel.deleteClip()
             }
             Button("إلغاء", role: .cancel) { }
         }
-        // System alert presenter
+
         .systemAlert(config: $alertConfig)
+
         .onAppear {
-            // Ensure the VM updates the shared store (library flow)
             viewModel.injectStoreIfNeeded(store)
         }
     }
 
-    // MARK: - Alerts / Sheets (UIKit)
+    // MARK: - Alerts
 
     private func presentClipNameAlert() {
         viewModel.popupKind = .clipName
@@ -218,22 +242,18 @@ struct VideoPlayerView: View {
 
     private func presentCategoryAlert() {
         let categories = viewModel.categoriesForPopup
-
         var actions: [AlertAction] = []
 
-        // 1) Add new category
         actions.append(AlertAction("إضافة تصنيف جديد", style: .default, handler: {
             presentNewCategoryAlert()
         }))
 
-        // 2) Existing categories
         actions.append(contentsOf: categories.map { cat in
             AlertAction(cat, style: .default, handler: {
                 viewModel.selectCategoryAndSave(cat)
             })
         })
 
-        // 3) Cancel
         actions.append(AlertAction("إلغاء", style: .cancel, handler: nil))
 
         alertConfig = AlertConfig(
@@ -263,9 +283,7 @@ struct VideoPlayerView: View {
                 )
             ],
             actions: [
-                AlertAction("إلغاء", style: .cancel, handler: {
-                    // Optional: presentCategoryAlert()
-                }),
+                AlertAction("إلغاء", style: .cancel, handler: nil),
                 AlertAction("حفظ", style: .default, handler: {
                     let trimmed = viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !trimmed.isEmpty else { return }
@@ -279,4 +297,3 @@ struct VideoPlayerView: View {
         )
     }
 }
-
